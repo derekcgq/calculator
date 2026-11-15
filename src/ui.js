@@ -10,10 +10,46 @@ const tone = t => `<span class="tone ${t}">${t === 'good' ? L('Supportive', '有
 const PRESETS = {
   sg: {name:'Singapore', lon:103.82, tz:8, hist:'sgmy'},
   kl: {name:'Kuala Lumpur', lon:101.69, tz:8, hist:'sgmy'},
-  hk: {name:'Hong Kong', lon:114.17, tz:8},
-  bj: {name:'Beijing', lon:116.40, tz:8},
-  sh: {name:'Shanghai', lon:121.47, tz:8},
-  tp: {name:'Taipei', lon:121.56, tz:8},
+  bj: {name:'Beijing', lon:116.41, tz:8, grp:'cn', hist:'cn'},
+  tj: {name:'Tianjin', lon:117.2, tz:8, grp:'cn', hist:'cn'},
+  sh: {name:'Shanghai', lon:121.47, tz:8, grp:'cn', hist:'cn'},
+  cq: {name:'Chongqing', lon:106.55, tz:8, grp:'cn', hist:'cn'},
+  shijiazhuang: {name:'Shijiazhuang (Hebei)', lon:114.51, tz:8, grp:'cn', hist:'cn'},
+  taiyuan: {name:'Taiyuan (Shanxi)', lon:112.55, tz:8, grp:'cn', hist:'cn'},
+  hohhot: {name:'Hohhot (Inner Mongolia)', lon:111.67, tz:8, grp:'cn', hist:'cn'},
+  shenyang: {name:'Shenyang (Liaoning)', lon:123.43, tz:8, grp:'cn', hist:'cn'},
+  dalian: {name:'Dalian (Liaoning)', lon:121.62, tz:8, grp:'cn', hist:'cn'},
+  changchun: {name:'Changchun (Jilin)', lon:125.32, tz:8, grp:'cn', hist:'cn'},
+  harbin: {name:'Harbin (Heilongjiang)', lon:126.64, tz:8, grp:'cn', hist:'cn'},
+  nanjing: {name:'Nanjing (Jiangsu)', lon:118.8, tz:8, grp:'cn', hist:'cn'},
+  suzhou: {name:'Suzhou (Jiangsu)', lon:120.62, tz:8, grp:'cn', hist:'cn'},
+  hangzhou: {name:'Hangzhou (Zhejiang)', lon:120.15, tz:8, grp:'cn', hist:'cn'},
+  hefei: {name:'Hefei (Anhui)', lon:117.23, tz:8, grp:'cn', hist:'cn'},
+  fuzhou: {name:'Fuzhou (Fujian)', lon:119.3, tz:8, grp:'cn', hist:'cn'},
+  xiamen: {name:'Xiamen (Fujian)', lon:118.09, tz:8, grp:'cn', hist:'cn'},
+  nanchang: {name:'Nanchang (Jiangxi)', lon:115.86, tz:8, grp:'cn', hist:'cn'},
+  jinan: {name:'Jinan (Shandong)', lon:117.0, tz:8, grp:'cn', hist:'cn'},
+  qingdao: {name:'Qingdao (Shandong)', lon:120.38, tz:8, grp:'cn', hist:'cn'},
+  zhengzhou: {name:'Zhengzhou (Henan)', lon:113.63, tz:8, grp:'cn', hist:'cn'},
+  wuhan: {name:'Wuhan (Hubei)', lon:114.31, tz:8, grp:'cn', hist:'cn'},
+  changsha: {name:'Changsha (Hunan)', lon:112.94, tz:8, grp:'cn', hist:'cn'},
+  guangzhou: {name:'Guangzhou (Guangdong)', lon:113.26, tz:8, grp:'cn', hist:'cn'},
+  shenzhen: {name:'Shenzhen (Guangdong)', lon:114.06, tz:8, grp:'cn', hist:'cn'},
+  nanning: {name:'Nanning (Guangxi)', lon:108.37, tz:8, grp:'cn', hist:'cn'},
+  haikou: {name:'Haikou (Hainan)', lon:110.35, tz:8, grp:'cn', hist:'cn'},
+  chengdu: {name:'Chengdu (Sichuan)', lon:104.07, tz:8, grp:'cn', hist:'cn'},
+  guiyang: {name:'Guiyang (Guizhou)', lon:106.63, tz:8, grp:'cn', hist:'cn'},
+  kunming: {name:'Kunming (Yunnan)', lon:102.83, tz:8, grp:'cn', hist:'cn'},
+  lhasa: {name:'Lhasa (Tibet)', lon:91.11, tz:8, grp:'cn', hist:'cn'},
+  xian: {name:"Xi'an (Shaanxi)", lon:108.94, tz:8, grp:'cn', hist:'cn'},
+  lanzhou: {name:'Lanzhou (Gansu)', lon:103.83, tz:8, grp:'cn', hist:'cn'},
+  xining: {name:'Xining (Qinghai)', lon:101.78, tz:8, grp:'cn', hist:'cn'},
+  yinchuan: {name:'Yinchuan (Ningxia)', lon:106.23, tz:8, grp:'cn', hist:'cn'},
+  urumqi: {name:'Urumqi (Xinjiang)', lon:87.62, tz:8, grp:'cn', hist:'cn'},
+  kashgar: {name:'Kashgar (Xinjiang)', lon:75.99, tz:8, grp:'cn', hist:'cn'},
+  hk: {name:'Hong Kong (SAR)', lon:114.17, tz:8, grp:'cn'},
+  mo: {name:'Macau (SAR)', lon:113.54, tz:8, grp:'cn'},
+  tp: {name:'Taipei (Taiwan)', lon:121.56, tz:8, grp:'cn'},
   jk: {name:'Jakarta', lon:106.85, tz:7},
   bk: {name:'Bangkok', lon:100.50, tz:7},
   tk: {name:'Tokyo', lon:139.69, tz:9},
@@ -22,10 +58,17 @@ const PRESETS = {
   ny: {name:'New York', lon:-74.0, tz:-5},
   custom: {name:'Custom…', lon:null, tz:null},
 };
+// Mainland China daylight saving 1986-1991 (dates per the IANA tz database)
+const CN_DST = {1986:[[5,4],[9,14]], 1987:[[4,12],[9,13]], 1988:[[4,17],[9,11]], 1989:[[4,16],[9,17]], 1990:[[4,15],[9,16]], 1991:[[4,14],[9,15]]};
 function histTz(preset, y, m, d) {
   const p = PRESETS[preset];
-  if (!p || p.hist !== 'sgmy') return null;
+  if (!p) return null;
   const v = y * 10000 + m * 100 + d;
+  if (p.hist === 'cn') {
+    const r = CN_DST[y];
+    return r && v >= y * 10000 + r[0][0] * 100 + r[0][1] && v < y * 10000 + r[1][0] * 100 + r[1][1] ? 9 : null;
+  }
+  if (p.hist !== 'sgmy') return null;
   if (v < 19330101) return 7 + 1/3;
   if (v < 19420216) return 7.5;
   if (v < 19450912) return 9;
@@ -374,7 +417,7 @@ function updateTz() {
   const hz = v.length === 3 ? histTz(key, ...v) : null;
   const tz = hz !== null ? hz : p.tz;
   $('#tz').value = +tz.toFixed(3);
-  $('#tznote').textContent = hz !== null && hz !== 8 ? `Auto-set: ${p.name} used UTC+${+hz.toFixed(2)} on this date.` : '';
+  $('#tznote').textContent = hz !== null && hz !== 8 ? (p.hist === 'cn' ? L('Auto-set: mainland China was on daylight saving (UTC+9) on this date.', '已自动设置：该日期中国大陆实行夏令时（UTC+9）。') : L(`Auto-set: ${p.name} used UTC+${+hz.toFixed(2)} on this date.`, `已自动设置：当时${CITY_ZH[key] || p.name}使用 UTC+${+hz.toFixed(2)}。`)) : '';
 }
 
 function setMode(m) {

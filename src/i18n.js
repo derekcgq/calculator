@@ -34,7 +34,7 @@ function applyStaticText() {
   const z = document.getElementById('zi');
   if (z) { z.options[0].text = T('zi23'); z.options[1].text = T('zi00'); }
   document.querySelectorAll('.tabs button').forEach(b => b.textContent = T('t_' + b.dataset.t));
-  const pl = document.getElementById('place'); if (pl && pl.options.length && typeof PRESETS !== 'undefined') [...pl.options].forEach(o => { o.text = L(PRESETS[o.value].name, CITY_ZH[o.value] || PRESETS[o.value].name); });
+  const pl = document.getElementById('place'); if (pl && pl.options.length && typeof PRESETS !== 'undefined') [...pl.options].forEach(o => { o.text = L(PRESETS[o.value].name, CITY_ZH[o.value] || PRESETS[o.value].name); }); if (pl) pl.querySelectorAll('optgroup').forEach(g => { const k = g.dataset.g; g.label = k === 'cn' ? L('China · by province / city', '中国 · 按省份/城市') : k === 'sea' ? L('Singapore / Malaysia', '新加坡 / 马来西亚') : L('Other places', '其他地区'); });
   document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG));
   document.querySelectorAll('.zhnote').forEach(el => { el.textContent = T('expertNote'); el.hidden = LANG !== 'zh'; });
 }
@@ -97,5 +97,10 @@ const ROLE_TIP_ZH = {
 const purposeLabel = k => { const lab = PURPOSES[k].label; const zh = (lab.match(/[一-鿿]+$/) || [lab])[0]; return L(lab.replace(/\s*[一-鿿]+$/, ''), zh); };
 const VERDICT_TXT = {'Strong match':'非常契合','Good match':'比较契合','Workable — needs awareness':'可以相处——需要多加留意','Challenging — high friction':'有挑战——摩擦较大'};
 
-const CITY_ZH = {sg:'新加坡', kl:'吉隆坡', hk:'香港', bj:'北京', sh:'上海', tp:'台北', jk:'雅加达', bk:'曼谷', tk:'东京', sy:'悉尼', ld:'伦敦', ny:'纽约', custom:'自定义…'};
-const placeOptions = () => Object.entries(PRESETS).map(([k, v]) => `<option value="${k}">${L(v.name, CITY_ZH[k] || v.name)}</option>`).join('');
+const CITY_ZH = {sg:'新加坡', kl:'吉隆坡', hk:'香港（特别行政区）', bj:'北京', sh:'上海', tp:'台北（台湾）', tj:'天津', cq:'重庆', shijiazhuang:'石家庄（河北）', taiyuan:'太原（山西）', hohhot:'呼和浩特（内蒙古）', shenyang:'沈阳（辽宁）', dalian:'大连（辽宁）', changchun:'长春（吉林）', harbin:'哈尔滨（黑龙江）', nanjing:'南京（江苏）', suzhou:'苏州（江苏）', hangzhou:'杭州（浙江）', hefei:'合肥（安徽）', fuzhou:'福州（福建）', xiamen:'厦门（福建）', nanchang:'南昌（江西）', jinan:'济南（山东）', qingdao:'青岛（山东）', zhengzhou:'郑州（河南）', wuhan:'武汉（湖北）', changsha:'长沙（湖南）', guangzhou:'广州（广东）', shenzhen:'深圳（广东）', nanning:'南宁（广西）', haikou:'海口（海南）', chengdu:'成都（四川）', guiyang:'贵阳（贵州）', kunming:'昆明（云南）', lhasa:'拉萨（西藏）', xian:'西安（陕西）', lanzhou:'兰州（甘肃）', xining:'西宁（青海）', yinchuan:'银川（宁夏）', urumqi:'乌鲁木齐（新疆）', kashgar:'喀什（新疆）', mo:'澳门（特别行政区）', jk:'雅加达', bk:'曼谷', tk:'东京', sy:'悉尼', ld:'伦敦', ny:'纽约', custom:'自定义…'};
+const placeOptions = () => { let g = null, out = '';
+  const grpLabel = x => x === 'cn' ? L('China · by province / city', '中国 · 按省份/城市') : L('Other places', '其他地区');
+  Object.entries(PRESETS).forEach(([k, v]) => { const gg = v.grp === 'cn' ? 'cn' : (k === 'sg' || k === 'kl' ? 'sea' : 'oth');
+    if (gg !== g) { if (g) out += '</optgroup>'; g = gg; out += gg === 'sea' ? '<optgroup label="' + L('Singapore / Malaysia', '新加坡 / 马来西亚') + '" data-g="sea">' : '<optgroup label="' + grpLabel(gg) + '" data-g="' + gg + '">'; }
+    out += `<option value="${k}">${L(v.name, CITY_ZH[k] || v.name)}</option>`; });
+  return out + '</optgroup>'; };
