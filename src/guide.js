@@ -159,8 +159,8 @@ function guideYour() {
   const set = (k, html) => { const el = document.querySelector(`.gyour[data-k="${k}"]`); if (el) el.innerHTML = `<div class="yours"><b>${L('In your chart', '你的命盘')}</b> ${html}</div>`; };
   const t = b.times;
   const tzs = `UTC${inp.tz >= 0 ? '+' : ''}${+inp.tz.toFixed(2)}`;
-  set('time', L(`Clock ${fmt(inp.wall)} at ${tzs}, longitude ${inp.lon}° → correction ${t.correctionMin} min (equation of time ${t.eot} min) → true solar <b>${fmt(t.tst)}</b> → ${b.pillars[3].zhi} hour. Solar term in force: <b>${b.jieqi}</b>.`,
-    `钟表时间 ${fmt(inp.wall)}（${tzs}），经度 ${inp.lon}° → 修正 ${t.correctionMin} 分钟（均时差 ${t.eot} 分钟）→ 真太阳时 <b>${fmt(t.tst)}</b> → ${b.pillars[3].zhi}时。当时节气：<b>${b.jieqi}</b>。`));
+  set('time', L(`Clock ${fmt(inp.wall)} at ${tzs}, longitude ${inp.lon}° → correction ${t.correctionMin} min (equation of time ${t.eot} min) → true solar <b>${fmt(t.tst)}</b> → ${b.pillars[3] ? b.pillars[3].zhi + ' hour' : 'hour unknown'}. Solar term in force: <b>${b.jieqi}</b>.`,
+    `钟表时间 ${fmt(inp.wall)}（${tzs}），经度 ${inp.lon}° → 修正 ${t.correctionMin} 分钟（均时差 ${t.eot} 分钟）→ 真太阳时 <b>${fmt(t.tst)}</b> → ${b.pillars[3] ? b.pillars[3].zhi + '时' : '时辰不详'}。当时节气：<b>${b.jieqi}</b>。`));
   set('pillars', b.pillars.map(p => L(`${p.en} <b>${p.gz}</b> (#${p.jiazi} of 60)`, `${p.zh} <b>${p.gz}</b>（六十甲子第 ${p.jiazi}）`)).join(' · ') + L(`. You are the Day stem <b>${b.dm}</b>.`, `。你是日干 <b>${b.dm}</b>。`));
   set('hidden', b.pillars.map(p => `${p.zhi} → ${p.hidden.map(x => x.stem).join('')}`).join(' · '));
   const tot = b.scores.reduce((a, c) => a + c, 0);
@@ -180,7 +180,7 @@ function guideYour() {
     `年干 ${b.pillars[0].gan} 为${stemYang(b.pillars[0].gan) ? '阳' : '阴'}，${b.gender ? '男' : '女'}命 → 从月柱 ${b.pillars[1].gz} <b>${fwd ? '顺排' : '逆排'}</b>。第一步大运 ${d0.gz} 于出生后 ${b.yunStart.y} 年 ${b.yunStart.m} 个月 ${b.yunStart.d} 天起运（${d0.startYear} 年）。`));
   set('stages', b.pillars.map(p => `${p.zhi}：${LIFE_STAGES[p.stage]}`).join(' · '));
   const life = zw.byName('命宫');
-  set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}). Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始）。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
+  if (!zw.unknown) set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}). Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始）。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
   set('qmbasics', L(`Now: ${q.dayGZ} day, ${q.hourGZ} hour, solar term ${q.jq} → <b>${q.yang ? 'Yang' : 'Yin'}</b>, ${q.yuan}, Ju <b>${q.ju}</b>. 旬首 ${q.xunName} hides under ${q.xunYi} → lead star ${q.zfStar} moves to ${QM_PALACE[q.zfPalace]}; lead door ${q.zsDoor} moves to ${QM_PALACE[q.zsPalace]}. Void ${q.kongBr.join('')}.`,
     `此刻：${q.dayGZ}日 ${q.hourGZ}时，节气 ${q.jq} → <b>${q.yang ? '阳遁' : '阴遁'}</b>，${q.yuan}，<b>${q.ju}局</b>。旬首 ${q.xunName} 遁于 ${q.xunYi} → 值符 ${q.zfStar} 移至 ${QM_PALACE[q.zfPalace].split(' ')[0]}宫；值使 ${q.zsDoor} 移至 ${QM_PALACE[q.zsPalace].split(' ')[0]}宫。空亡 ${q.kongBr.join('')}。`));
 }

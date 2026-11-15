@@ -54,6 +54,7 @@ const nyT = n => L(NY[n].traits, NY_ZH_FULL[n].t), nyL = n => L(NY[n].likes, NY_
 const nyName = n => L(NY[n] ? NY[n].en : n, n);
 
 function hourLabel(b) {
+  if (!b.hourKnown) return L('Birth time unknown 时辰不详', '出生时间不详');
   const l = b.times.local, z = b.pillars[3].zhi;
   const range = z === '子' ? (l[3] === 23 ? '23:00–23:59' : '00:00–00:59') : `${pad((BRANCHES.indexOf(z) * 2 - 1 + 24) % 24)}:00–${pad((BRANCHES.indexOf(z) * 2 + 1) % 24)}:00`;
   if (z === '子') return l[3] === 23 ? L(`Late Zi Hour 晚子时 (${range})`, `晚子时（${range}）`) : L(`Early Zi Hour 早子时 (${range})`, `早子时（${range}）`);
@@ -68,12 +69,14 @@ function readingData() {
   const clock = `${inp.wall[0]}-${pad(inp.wall[1])}-${pad(inp.wall[2])} ${pad(inp.wall[3])}:${pad(inp.wall[4])}`;
   out.head = L(`Born ${clock} (${inp.gender ? 'Male' : 'Female'})${inp.useTST ? `, true solar time ${fmt(b.times.tst)}` : ''} — this places you in the <b>${hourLabel(b)}</b>, locking in your complete BaZi chart and 10-year Luck Pillars.`,
     `出生于 ${clock}（${inp.gender ? '男' : '女'}）${inp.useTST ? `，真太阳时 ${fmt(b.times.tst)}` : ''}——属于<b>${hourLabel(b)}</b>，由此确定你完整的八字与十年大运。`);
+  if (!b.hourKnown) out.head = L(`Born ${clock.slice(0, 10)} (${inp.gender ? 'Male' : 'Female'}) — birth time unknown, so this reading uses the Year, Month and Day pillars only. The Hour pillar (children, later life) is left out rather than guessed.`,
+    `出生于 ${clock.slice(0, 10)}（${inp.gender ? '男' : '女'}）——出生时间不详，本解读仅依据年柱、月柱、日柱，不猜测时柱（子女与晚年）。`);
   const clockHour = inp.wall[3], solarHour = b.times.local[3];
   const zNote = [];
   if (inp.useTST && (clockHour === 0 || clockHour === 23 || solarHour === 23 || solarHour === 0) && (clockHour !== solarHour))
     zNote.push(L(`By the clock this is ${clockHour === 0 ? 'the Early Zi hour (after midnight)' : 'the Late Zi hour'}, but by true solar time it is ${solarHour === 23 ? 'the Late Zi hour of the previous day' : 'the Early Zi hour'}.`,
       `按钟表时间是${clockHour === 0 ? '早子时（午夜后）' : '晚子时'}，但按真太阳时则是${solarHour === 23 ? '前一天的晚子时' : '早子时'}。`));
-  if (P[3].zhi === '子') zNote.push(L(`Zi-hour rule in use: ${b.sect === 1 ? 'the day changes at 23:00, so a Late Zi birth takes the next day\'s pillar' : 'the day changes at midnight (夜子时 school): a Late Zi birth keeps the current day pillar but takes the next day\'s hour stem'}. Switch the "Zi hour rule" above to see the alternative chart.`,
+  if (P[3] && P[3].zhi === '子') zNote.push(L(`Zi-hour rule in use: ${b.sect === 1 ? 'the day changes at 23:00, so a Late Zi birth takes the next day\'s pillar' : 'the day changes at midnight (夜子时 school): a Late Zi birth keeps the current day pillar but takes the next day\'s hour stem'}. Switch the "Zi hour rule" above to see the alternative chart.`,
     `目前采用的子时规则：${b.sect === 1 ? '23:00 换日，所以晚子时出生取次日的日柱' : '午夜换日（夜子时派）：晚子时出生保留当天日柱，但时干取次日'}。可在上方切换“子时规则”查看另一种排法。`));
   out.zNote = zNote;
 
@@ -225,6 +228,7 @@ function zwPalaceText(zw, p) {
 }
 function zwReadingData() {
   const {zw} = STATE;
+  if (zw.unknown) return [];
   const P = n => zw.byName(n);
   const life = P('命宫');
   const sec = [];
@@ -276,6 +280,7 @@ function qmBlockEnd(q) {
 }
 function qmReadingData() {
   const {qmBirth: qb, qmNow: qn, bazi: b} = STATE;
+  if (qb.unknown) return [];
   const sec = [];
   const self = qb.stemPalace(b.dm), hourS = qb.stemPalace(b.pillars[3].gan), yearS = qb.stemPalace(b.pillars[0].gan);
   const dun = (q) => L(`${q.yang ? 'Yang' : 'Yin'} Dun ${q.ju}局`, `${q.yang ? '阳' : '阴'}遁${q.ju}局`);

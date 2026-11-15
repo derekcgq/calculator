@@ -156,7 +156,7 @@ function computeBazi(input) {
     stemGod: i === 2 ? '日主' : tenGod(dm, gz[0]),
     hidden: HIDDEN[gz[1]].split('').map(h => ({stem: h, god: tenGod(dm, h)})),
     stage: lifeStage(dm, gz[1]), nayin: nayin(gz),
-  }));
+  })).slice(0, input.noHour ? 3 : 4);
 
   // Elements & strength
   const scores = elementScores(pillars);
@@ -271,7 +271,7 @@ function computeBazi(input) {
     spousePalace, spouseStarName, spouseStarCount, spouseStarGroup, interactions, kong, daYun,
     yunStart: {y: yun.getStartYear(), m: yun.getStartMonth(), d: yun.getStartDay()},
     lunar: lunL, jieqi: lunBJ.getPrevJieQi().getName(),
-    gender, sect,
+    gender, sect, hourKnown: !input.noHour,
   };
 }
 

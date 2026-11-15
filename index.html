@@ -170,7 +170,7 @@ footer{color:var(--muted);font-size:11px;margin:24px 0 40px}
  <div class="grid">
   <label><span data-i18n="name"></span><input id="pname" placeholder="e.g. Alex"></label>
   <label><span data-i18n="bdate"></span><input type="date" id="bdate" required></label>
-  <label><span data-i18n="btime"></span><input type="time" id="btime" required></label>
+  <label><span data-i18n="btime"></span><input type="time" id="btime"><span class="chk" style="display:flex;gap:6px;align-items:center;margin-top:6px;font-size:13px"><input type="checkbox" id="notime" style="width:auto"> <span data-i18n="notime"></span></span></label>
   <label><span data-i18n="gender"></span><select id="gender"><option value="m">Male 男</option><option value="f">Female 女</option></select></label>
   <label><span data-i18n="place"></span><select id="place"></select></label>
  </div>
@@ -375,7 +375,7 @@ function computeBazi(input) {
     stemGod: i === 2 ? '日主' : tenGod(dm, gz[0]),
     hidden: HIDDEN[gz[1]].split('').map(h => ({stem: h, god: tenGod(dm, h)})),
     stage: lifeStage(dm, gz[1]), nayin: nayin(gz),
-  }));
+  })).slice(0, input.noHour ? 3 : 4);
 
   // Elements & strength
   const scores = elementScores(pillars);
@@ -490,7 +490,7 @@ function computeBazi(input) {
     spousePalace, spouseStarName, spouseStarCount, spouseStarGroup, interactions, kong, daYun,
     yunStart: {y: yun.getStartYear(), m: yun.getStartMonth(), d: yun.getStartDay()},
     lunar: lunL, jieqi: lunBJ.getPrevJieQi().getName(),
-    gender, sect,
+    gender, sect, hourKnown: !input.noHour,
   };
 }
 
@@ -657,7 +657,7 @@ const ELN = e => L(EL_EN[e], EL[e]);
 const UI_TXT = {
   title: ['四柱 · 紫微 · 奇门 Destiny Calculator', '四柱 · 紫微 · 奇门 命理计算器'],
   sub: ['BaZi Four Pillars with Ten Gods, Five Elements and Luck Pillars — cross-referenced with Zi Wei Dou Shu and Qi Men Dun Jia.', '八字四柱（十神、五行、大运），并与紫微斗数、奇门遁甲交叉参照。'],
-  name: ['Name (optional)', '姓名（可选）'], bdate: ['Birth date', '出生日期'], btime: ['Birth time (clock)', '出生时间（钟表时间）'],
+  notime: ['Birth time unknown', '不知道出生时间'], name: ['Name (optional)', '姓名（可选）'], bdate: ['Birth date', '出生日期'], btime: ['Birth time (clock)', '出生时间（钟表时间）'],
   gender: ['Gender', '性别'], place: ['Birthplace', '出生地'], lon: ['Longitude °E', '经度 °E'], tz: ['UTC offset at birth', '出生时的时区（UTC±）'],
   zi: ['Zi hour rule 子时', '子时规则'], zi23: ['Day changes at 23:00 (traditional)', '23:00 换日（传统）'], zi00: ['Day changes at 00:00', '00:00 换日'],
   tst: ['Use true solar time 真太阳时', '使用真太阳时'], qauto: ['Query time = now (auto-updates)', '查询时间 = 现在（自动更新）'],
@@ -835,12 +835,13 @@ function histTz(preset, y, m, d) {
 
 function readForm() {
   const [y, m, d] = $('#bdate').value.split('-').map(Number);
-  const [h, mi] = $('#btime').value.split(':').map(Number);
+  const noHour = $('#notime').checked;
+  const [h, mi] = noHour ? [12, 0] : $('#btime').value.split(':').map(Number);
   const [qy, qm, qd] = $('#qdate').value.split('-').map(Number);
   const [qh, qmi] = $('#qtime').value.split(':').map(Number);
   return {
     wall: [y, m, d, h, mi], tz: parseFloat($('#tz').value), lon: parseFloat($('#lon').value),
-    useTST: $('#tst').checked, gender: $('#gender').value === 'm' ? 1 : 0, ziRule: $('#zi').value,
+    useTST: noHour ? false : $('#tst').checked, noHour, gender: $('#gender').value === 'm' ? 1 : 0, ziRule: $('#zi').value,
     preset: $('#place').value, qwall: [qy, qm, qd, qh, qmi], qtz: parseFloat($('#qtz').value),
     name: $('#pname').value.trim(),
   };
@@ -865,20 +866,27 @@ function syncQueryMode() {
     $('#qnowtxt').textContent = L(`Using ${n.date} ${n.time} (UTC${n.tz >= 0 ? '+' : ''}${n.tz})`, `使用 ${n.date} ${n.time}（UTC${n.tz >= 0 ? '+' : ''}${n.tz}）`);
   } else $('#qnowtxt').textContent = '';
 }
+// Placeholders used when the birth hour is unknown: Zi Wei and the Qi Men birth chart both need it
+const NEUTRAL_PALACE = {name: '', en: '', stem: '', branch: '', isBody: false, major: [], minor: [], adj: [], decadal: [0, 0]};
+const NEUTRAL_CELL = {p: 5, name: '', door: '', star: '', god: '', earth: '', heaven: '', tone: 'mixed', kong: false, ma: false, score: 0};
+const ZW_STUB = {unknown: true, palaces: [], mutLoc: {}, current: null, lunarDate: '', time: '', fiveClass: '',
+  byName: () => NEUTRAL_PALACE, opposite: () => NEUTRAL_PALACE, evalPalace: () => ({score: 0, tone: 'mixed', stars: [], borrowed: false, notes: []})};
+const QM_STUB = {unknown: true, yang: true, ju: 0, jq: '', yuan: '', cells: {}, stemPalace: () => null, doorPalace: () => NEUTRAL_CELL, godPalace: () => NEUTRAL_CELL, starPalace: () => NEUTRAL_CELL};
+const NOHOUR_NOTE = () => `<div class="card"><b>${L('Birth time unknown', '出生时间不详')}</b><p class="small muted">${L('Your chart uses the Year, Month and Day pillars only. The Hour pillar, the Zi Wei Dou Shu chart and the Qi Men birth chart all depend on the exact birth time, so they are left out rather than guessed. If a parent or document can narrow the time to even a rough window, enter it to unlock them.', '你的命盘只用年柱、月柱、日柱。时柱、紫微斗数命盘与奇门命局都依赖精确的出生时间，所以不作猜测，暂不显示。若能向家人或证件问到大致时段，填入后即可解锁。')}</p></div>`;
 function calculate(scroll = true) {
   syncQueryMode();
   const inp = readForm();
   if (!inp.wall.every(n => !isNaN(n)) || isNaN(inp.tz) || isNaN(inp.lon)) { $('#err').textContent = L('Please complete birth date, time, longitude and UTC offset.', '请填写完整的出生日期、时间、经度和时区。'); return; }
   $('#err').textContent = '';
-  try { localStorage.setItem('fp-input', JSON.stringify({b: $('#bdate').value, t: $('#btime').value, g: $('#gender').value, p: $('#place').value, lon: $('#lon').value, tz: $('#tz').value, tst: $('#tst').checked, zi: $('#zi').value, n: $('#pname').value})); } catch (e) {}
+  try { localStorage.setItem('fp-input', JSON.stringify({b: $('#bdate').value, t: $('#btime').value, g: $('#gender').value, p: $('#place').value, lon: $('#lon').value, tz: $('#tz').value, nt: $('#notime').checked, tst: $('#tst').checked, zi: $('#zi').value, n: $('#pname').value})); } catch (e) {}
   const bazi = computeBazi(inp);
   const qUtc = Date.UTC(inp.qwall[0], inp.qwall[1] - 1, inp.qwall[2], inp.qwall[3], inp.qwall[4]) - inp.qtz * 3600e3;
   const queryDate = new Date(qUtc);
-  const zw = computeZiwei(inp, bazi, queryDate);
-  const qmBirth = computeQimen(inp.wall, inp.tz, inp.lon, inp.useTST, inp.ziRule);
+  const zw = inp.noHour ? ZW_STUB : computeZiwei(inp, bazi, queryDate);
+  const qmBirth = inp.noHour ? QM_STUB : computeQimen(inp.wall, inp.tz, inp.lon, inp.useTST, inp.ziRule);
   const qmNow = computeQimen(inp.qwall, inp.qtz, inp.lon, inp.useTST, inp.ziRule);
   const qYear = new Date(qUtc + 8 * 3600e3).getUTCFullYear();
-  STATE = {inp, bazi, zw, qmBirth, qmNow, qYear, qmView: (STATE && STATE.qmView) || 'birth'};
+  STATE = {inp, bazi, zw, qmBirth, qmNow, qYear, qmView: inp.noHour ? 'now' : (STATE && STATE.qmView) || 'birth'};
   render();
   $('#results').hidden = false;
   { const cur = location.hash.slice(1); showTab(!cur || (cur === 'guide' && scroll) ? 'summary' : cur); }
@@ -887,6 +895,7 @@ function calculate(scroll = true) {
 
 function render() {
   renderBazi(); renderZiwei(); renderQimen(); renderCross(); initCompat(); guideYour(); renderReading(); renderSimple(); zhScope();
+  if (STATE.inp.noHour) $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE());
 }
 
 // ---------- BaZi ----------
@@ -911,6 +920,7 @@ function renderBazi() {
       <div class="pfoot"><span>${LIFE_STAGES[p.stage]} <small>${LIFE_STAGES_EN[p.stage]} — ${STAGE_PLAIN[p.stage]}</small></span><span>${esc(p.nayin)}</span><span class="muted">#${p.jiazi}/60 · ages ${p.ages}</span></div>
     </div>`;
   });
+  if (!b.hourKnown) h += `<div class="pillar" style="opacity:.55"><div class="ptitle">时柱 Hour</div><div class="pmean">${L('Needs the birth time', '需要出生时间')}</div><div class="pchars"><span class="ch big">?</span><div class="sub">&nbsp;</div><span class="ch big">?</span></div></div>`;
   h += `</div><p class="muted small">Day pillar void (空亡): ${b.kong.join('')} · Palace ages are the classical guide (year 0–16, month 17–32, day 33–48, hour 49+).</p>`;
 
   // Elements
@@ -994,6 +1004,7 @@ function starHtml(s, cls) {
   return `<span class="st ${cls}">${s.name}${s.b ? `<i>${s.b}</i>` : ''}${s.m ? `<em class="m-${s.m}">${s.m}</em>` : ''}</span>`;
 }
 function renderZiwei() {
+  if (STATE.zw.unknown) { $('#tab-ziwei').innerHTML = NOHOUR_NOTE(); return; }
   const {zw} = STATE;
   const cur = zw.current;
   let h = `<div class="card meta"><div>Lunar ${esc(zw.lunarDate)} · ${esc(zw.chineseDate)} · ${esc(zw.time)} (${esc(zw.timeRange)})</div><div class="muted">Five Element Bureau 五行局: <b>${esc(zw.fiveClass)}</b> · Life master 命主: <b>${esc(zw.soul)}</b> · Body master 身主: <b>${esc(zw.body)}</b></div></div>`;
@@ -1038,8 +1049,8 @@ function showZwPalace(i) {
 const QM_GRID = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
 function renderQimen() {
   const {qmBirth, qmNow, qmView} = STATE;
-  const q = qmView === 'birth' ? qmBirth : qmNow;
-  let h = `<div class="seg"><button data-v="birth" class="${qmView === 'birth' ? 'on' : ''}">Birth chart 命局</button><button data-v="now" class="${qmView === 'now' ? 'on' : ''}">Query time 时局</button></div>
+  const q = qmView === 'birth' && !qmBirth.unknown ? qmBirth : qmNow;
+  let h = qmBirth.unknown ? `<div class="seg" hidden><button data-v="now"></button></div>` : `<div class="seg"><button data-v="birth" class="${qmView === 'birth' ? 'on' : ''}">Birth chart 命局</button><button data-v="now" class="${qmView === 'now' ? 'on' : ''}">Query time 时局</button></div>
   <div class="card meta"><div><b>${fmt(q.times.local)}</b> ${STATE.inp.useTST ? '(true solar)' : ''} · ${q.dayGZ}日 ${q.hourGZ}时 · ${q.jq} ${q.yuan} · <b>${q.yang ? '阳遁 Yang' : '阴遁 Yin'} ${q.ju}局</b></div>
   <div class="muted">旬首 ${q.xunName}(${q.xunYi}) · 值符 ${q.zfStar} → ${QM_PALACE[q.zfPalace]} · 值使 ${q.zsDoor} → ${QM_PALACE[q.zsPalace]} · 空亡 ${q.kongBr.join('')} · 驿马 ${q.maBr}</div></div>
   ${ex('How to read the Qi Men chart', QM_HOWTO)}
@@ -1129,6 +1140,7 @@ function renderCross() {
     {sys: 'Qi Men', t: qHour ? qHour.tone : 'mixed', txt: `Query-time chart: hour stem ${qn.hourGZ[0]} in ${qHour ? qHour.name + ' (' + (qHour.door || '—') + ', ' + qHour.star + ')' : '—'}; 值使 ${qn.zsDoor} → ${QM_PALACE[qn.zsPalace]}.`},
   ]});
 
+  if (qb.unknown) rows.forEach(r => { r.items = r.items.filter(x => x.sys === 'BaZi' || (x.sys === 'Qi Men' && x.txt.startsWith('Query-time'))); });
   STATE.crossRows = rows;
   let h = ex('How to read the cross-reference', CROSS_HOWTO, true) + `<p class="muted small">Each row reads the same life area through three independent systems. Agreement across systems is the signal worth paying attention to; a lone result is a weaker hint. Qi Men natal rows use the birth-hour chart; "Now" uses the query time.</p>`;
   rows.forEach(r => {
@@ -1146,8 +1158,8 @@ function renderCross() {
   const hits = [hoStrength >= 1, lifeRebel.length > 0 || quan, !!qmExp].filter(Boolean).length;
   h += `<div class="card ho"><h4>伤官 Hurting Officer signature — cross-check <span class="agree ${hits >= 2 ? 'good' : 'mixed'}">${hits}/3 systems</span></h4>
     <div class="xi"><span class="sys">BaZi</span><div>${hoStrength ? `Hurting Officer ${b.ho.visible.length ? 'visible' : 'hidden (main qi)'} ×${hoStrength}${b.ho.patterns.length ? ' — ' + b.ho.patterns.map(p => p.name.split(' ')[0]).join(', ') : ''}` : (b.ho.present ? 'Only residual/middle-qi Hurting Officer — mild.' : 'No natal Hurting Officer.')}</div></div>
-    <div class="xi"><span class="sys">Zi Wei</span><div>${lifeRebel.length ? `Independent/outspoken stars in Life palace: ${lifeRebel.join(', ')}.` : 'No strongly rule-challenging star in Life palace.'}${quan ? ` 化权 in ${zw.mutLoc['权'].palace.name} — assertive drive.` : ''}</div></div>
-    <div class="xi"><span class="sys">Qi Men</span><div>${qmExp ? `Day stem palace carries ${qSelf.door}/${qSelf.star} — expressive, confrontational or visibility-seeking energy.` : `Day stem palace (${qSelf ? qSelf.door + '/' + qSelf.star : '—'}) does not emphasise expression.`}</div></div>
+    ${qb.unknown ? '' : `<div class="xi"><span class="sys">Zi Wei</span><div>${lifeRebel.length ? `Independent/outspoken stars in Life palace: ${lifeRebel.join(', ')}.` : 'No strongly rule-challenging star in Life palace.'}${quan ? ` 化权 in ${zw.mutLoc['权'].palace.name} — assertive drive.` : ''}</div></div>`}
+    ${qb.unknown ? '' : `<div class="xi"><span class="sys">Qi Men</span><div>${qmExp ? `Day stem palace carries ${qSelf.door}/${qSelf.star} — expressive, confrontational or visibility-seeking energy.` : `Day stem palace (${qSelf ? qSelf.door + '/' + qSelf.star : '—'}) does not emphasise expression.`}</div></div>`}
     <p class="small muted">Analogy used: BaZi 伤官 (talent that defies rules) ↔ Zi Wei 破军/七杀/贪狼/廉贞/巨门 or 化权 in the Life/Career palace ↔ Qi Men 伤门/惊门/景门 or 天冲/天英 on the Day stem.</p></div>`;
   $('#tab-cross').innerHTML = crossCards() + techWrap(h, 'cross');
 }
@@ -1199,11 +1211,12 @@ function init() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('fp-input') || 'null'); } catch (e) {}
   if (saved) {
-    $('#bdate').value = saved.b; $('#btime').value = saved.t; $('#gender').value = saved.g; sel.value = saved.p || 'sg';
+    $('#bdate').value = saved.b; $('#btime').value = saved.t; $('#notime').checked = !!saved.nt; $('#btime').disabled = !!saved.nt; $('#gender').value = saved.g; sel.value = saved.p || 'sg';
     $('#tst').checked = saved.tst !== false; $('#zi').value = saved.zi || '23'; $('#pname').value = saved.n || '';
     setPreset(); if (saved.p === 'custom') { $('#lon').value = saved.lon; $('#tz').value = saved.tz; }
   } else { sel.value = 'sg'; setPreset(); }
   sel.onchange = setPreset;
+  $('#notime').onchange = () => { $('#btime').disabled = $('#notime').checked; };
   $('#bdate').onchange = updateTz;
   // Auto "now": refresh every minute; re-render when the Chinese hour (and so the Qi Men chart) changes
   setInterval(() => {
@@ -1962,6 +1975,7 @@ const nyT = n => L(NY[n].traits, NY_ZH_FULL[n].t), nyL = n => L(NY[n].likes, NY_
 const nyName = n => L(NY[n] ? NY[n].en : n, n);
 
 function hourLabel(b) {
+  if (!b.hourKnown) return L('Birth time unknown 时辰不详', '出生时间不详');
   const l = b.times.local, z = b.pillars[3].zhi;
   const range = z === '子' ? (l[3] === 23 ? '23:00–23:59' : '00:00–00:59') : `${pad((BRANCHES.indexOf(z) * 2 - 1 + 24) % 24)}:00–${pad((BRANCHES.indexOf(z) * 2 + 1) % 24)}:00`;
   if (z === '子') return l[3] === 23 ? L(`Late Zi Hour 晚子时 (${range})`, `晚子时（${range}）`) : L(`Early Zi Hour 早子时 (${range})`, `早子时（${range}）`);
@@ -1976,12 +1990,14 @@ function readingData() {
   const clock = `${inp.wall[0]}-${pad(inp.wall[1])}-${pad(inp.wall[2])} ${pad(inp.wall[3])}:${pad(inp.wall[4])}`;
   out.head = L(`Born ${clock} (${inp.gender ? 'Male' : 'Female'})${inp.useTST ? `, true solar time ${fmt(b.times.tst)}` : ''} — this places you in the <b>${hourLabel(b)}</b>, locking in your complete BaZi chart and 10-year Luck Pillars.`,
     `出生于 ${clock}（${inp.gender ? '男' : '女'}）${inp.useTST ? `，真太阳时 ${fmt(b.times.tst)}` : ''}——属于<b>${hourLabel(b)}</b>，由此确定你完整的八字与十年大运。`);
+  if (!b.hourKnown) out.head = L(`Born ${clock.slice(0, 10)} (${inp.gender ? 'Male' : 'Female'}) — birth time unknown, so this reading uses the Year, Month and Day pillars only. The Hour pillar (children, later life) is left out rather than guessed.`,
+    `出生于 ${clock.slice(0, 10)}（${inp.gender ? '男' : '女'}）——出生时间不详，本解读仅依据年柱、月柱、日柱，不猜测时柱（子女与晚年）。`);
   const clockHour = inp.wall[3], solarHour = b.times.local[3];
   const zNote = [];
   if (inp.useTST && (clockHour === 0 || clockHour === 23 || solarHour === 23 || solarHour === 0) && (clockHour !== solarHour))
     zNote.push(L(`By the clock this is ${clockHour === 0 ? 'the Early Zi hour (after midnight)' : 'the Late Zi hour'}, but by true solar time it is ${solarHour === 23 ? 'the Late Zi hour of the previous day' : 'the Early Zi hour'}.`,
       `按钟表时间是${clockHour === 0 ? '早子时（午夜后）' : '晚子时'}，但按真太阳时则是${solarHour === 23 ? '前一天的晚子时' : '早子时'}。`));
-  if (P[3].zhi === '子') zNote.push(L(`Zi-hour rule in use: ${b.sect === 1 ? 'the day changes at 23:00, so a Late Zi birth takes the next day\'s pillar' : 'the day changes at midnight (夜子时 school): a Late Zi birth keeps the current day pillar but takes the next day\'s hour stem'}. Switch the "Zi hour rule" above to see the alternative chart.`,
+  if (P[3] && P[3].zhi === '子') zNote.push(L(`Zi-hour rule in use: ${b.sect === 1 ? 'the day changes at 23:00, so a Late Zi birth takes the next day\'s pillar' : 'the day changes at midnight (夜子时 school): a Late Zi birth keeps the current day pillar but takes the next day\'s hour stem'}. Switch the "Zi hour rule" above to see the alternative chart.`,
     `目前采用的子时规则：${b.sect === 1 ? '23:00 换日，所以晚子时出生取次日的日柱' : '午夜换日（夜子时派）：晚子时出生保留当天日柱，但时干取次日'}。可在上方切换“子时规则”查看另一种排法。`));
   out.zNote = zNote;
 
@@ -2133,6 +2149,7 @@ function zwPalaceText(zw, p) {
 }
 function zwReadingData() {
   const {zw} = STATE;
+  if (zw.unknown) return [];
   const P = n => zw.byName(n);
   const life = P('命宫');
   const sec = [];
@@ -2184,6 +2201,7 @@ function qmBlockEnd(q) {
 }
 function qmReadingData() {
   const {qmBirth: qb, qmNow: qn, bazi: b} = STATE;
+  if (qb.unknown) return [];
   const sec = [];
   const self = qb.stemPalace(b.dm), hourS = qb.stemPalace(b.pillars[3].gan), yearS = qb.stemPalace(b.pillars[0].gan);
   const dun = (q) => L(`${q.yang ? 'Yang' : 'Yin'} Dun ${q.ju}局`, `${q.yang ? '阳' : '阴'}遁${q.ju}局`);
@@ -2272,6 +2290,7 @@ function simpleHtml() {
   const W = r => r ? r.items.map(x => `<b>${x.sys}:</b> ${esc(x.txt)}`).join('<br>') : '';
   const dom = b.dominant[0][0];
   const P = n => zw.byName(n);
+  const ZWT = t => zw.unknown ? '' : t;
   const zh = LANG === 'zh';
   let h = '';
   const glance = [];
@@ -2340,7 +2359,7 @@ function simpleHtml() {
   h += C('👨‍👩‍👧', L('Family — parents & children', '家庭——父母与子女'), overall(famT), null,
     `<p><b>${L('Parents / elders:', '父母／长辈：')}</b> ${tw(parE.tone, ['generally supportive','a relationship that needs patience','a mixed, normal relationship'], ['大体支持你','需要多些耐心的关系','好坏参半、正常的关系'])}${starsShort(parE)}${yearClash ? L('; some distance or differences with family background', '；与家庭背景有些距离或分歧') : ''}${L('.', '。')}</p>
      <p><b>${L('Children:', '子女：')}</b> ${tw(kidE.tone, ['a source of joy and pride','parenting takes extra effort and patience','a balanced, normal picture'], ['带来快乐与骄傲','养育需要更多心力与耐心','平稳、正常'])}${starsShort(kidE)}${hourClash ? L('; differences of opinion with children are likely — give them independence', '；与子女容易有意见分歧——给他们独立空间') : ''}${L('.', '。')}</p>`,
-    null, null, `Zi Wei 父母: ${parE.stars.map(s => s.name).join('+') || '—'} (${parE.tone}); 子女: ${kidE.stars.map(s => s.name).join('+') || '—'} (${kidE.tone}). BaZi Year pillar = parents, Hour pillar = children${yearClash || hourClash ? '; clashes present' : ''}.`);
+    null, null, ZWT(`Zi Wei 父母: ${parE.stars.map(s => s.name).join('+') || '—'} (${parE.tone}); 子女: ${kidE.stars.map(s => s.name).join('+') || '—'} (${kidE.tone}). BaZi Year pillar = parents, Hour pillar = children${yearClash || hourClash ? '; clashes present' : ''}.`));
 
   // Friends
   const frE = zw.evalPalace(P('仆役'));
@@ -2349,7 +2368,7 @@ function simpleHtml() {
     `<p>${tw(frE.tone, ['Friends and teammates tend to help you.','Choose your circle carefully — not everyone has your interests at heart.','A mixed circle — some helpers, some drainers.'], ['朋友和队友多半会帮你。','慎选身边的人——不是每个人都为你着想。','圈子好坏参半——有贵人，也有消耗你的人。'])}
        ${compet ? L(' You have a competitive streak with peers; it pushes you, but watch shared money with friends.', '你和同辈之间有好胜心，能激励你，但和朋友之间的金钱往来要小心。') : ''}</p>
      ${frE.stars.length ? `<p>${L('Your circle tends to be: ', '你的圈子多是：')}${frE.stars.map(s => plainStar(s.name)).join(SEP())}${L('.', '。')}</p>` : ''}`,
-    compet ? L('Keep money and friendship separate.', '钱和友情要分开。') : null, null, `Zi Wei 仆役: ${frE.stars.map(s => s.name).join('+') || '—'}${frE.notes.length ? ' · ' + frE.notes.join(', ') : ''}. BaZi Companion ${b.groupScore.peer.toFixed(1)}.`);
+    compet ? L('Keep money and friendship separate.', '钱和友情要分开。') : null, null, ZWT(`Zi Wei 仆役: ${frE.stars.map(s => s.name).join('+') || '—'}${frE.notes.length ? ' · ' + frE.notes.join(', ') : ''}. BaZi Companion ${b.groupScore.peer.toFixed(1)}.`));
 
   // Health
   const tot = b.scores.reduce((a, c) => a + c, 0);
@@ -2363,14 +2382,14 @@ function simpleHtml() {
         `需要多照顾：<b>${organs}</b>（因为命盘中有五行${hi.length ? '过旺' : ''}${hi.length && lo.length ? '或' : ''}${lo.length ? '过弱' : ''}）。`)
       : L('Your elements are fairly balanced — no single body area stands out.', '你的五行比较平衡——没有特别需要担心的身体部位。')}</p>
      <p>${hE.tone === 'warn' ? L('Stress tends to show up physically — build in rest.', '压力容易反映在身体上——要安排休息。') : L('Your general constitution reads as steady.', '整体体质较为稳定。')}</p>`,
-    L('Traditional indications only — not medical advice.', '仅为传统命理参考，不构成医疗建议。'), null, `${b.scores.map((s, e) => EL[e] + ' ' + Math.round(s / tot * 100) + '%').join(', ')}. Zi Wei 疾厄: ${hE.stars.map(s => s.name).join('+') || '—'} (${hE.tone}).`);
+    L('Traditional indications only — not medical advice.', '仅为传统命理参考，不构成医疗建议。'), null, `${b.scores.map((s, e) => EL[e] + ' ' + Math.round(s / tot * 100) + '%').join(', ')}${ZWT(`. Zi Wei 疾厄: ${hE.stars.map(s => s.name).join('+') || '—'} (${hE.tone}).`)}`);
 
   // Home
   const homeE = zw.evalPalace(P('田宅'));
   h += C('🏠', L('Home & property', '家宅与房产'), homeE.tone, null,
     `<p>${tw(homeE.tone, ['Property and home are a source of stability and gains for you.','Home and property decisions need extra care — check details twice.','Home and property are a normal, mixed area.'], ['房产和家庭能为你带来稳定与收获。','买房、搬家等决定要格外谨慎——细节多核对。','家宅方面属于正常、好坏参半。'])}
       ${b.groupScore.resource >= 2 ? L(' Owning a base matters to your sense of security.', '有自己的房子对你的安全感很重要。') : ''}</p>`,
-    null, null, `Zi Wei 田宅: ${homeE.stars.map(s => s.name + (s.m ? '化' + s.m : '')).join('+') || '—'}${homeE.notes.length ? ' · ' + homeE.notes.join(', ') : ''}.`);
+    null, null, ZWT(`Zi Wei 田宅: ${homeE.stars.map(s => s.name + (s.m ? '化' + s.m : '')).join('+') || '—'}${homeE.notes.length ? ' · ' + homeE.notes.join(', ') : ''}.`));
 
   // Timeline
   const cd = b.daYun.findIndex(d => qYear >= d.startYear && qYear <= d.endYear);
@@ -2576,6 +2595,7 @@ function qmCards() {
   const {qmBirth: qb, qmNow: qn, bazi: b} = STATE;
   const cellLine = c => c ? `${L('Door', '门')}: <b>${c.door || '—'}</b> — ${plainDoor(c.door) || '—'}<br>${L('Star', '星')}: <b>${c.star}</b> — ${qStar(c.star)}<br>${L('Spirit', '神')}: <b>${c.god || '—'}</b> — ${qGod(c.god)}${c.kong ? `<br>⚠️ ${L('Void — delays, less solid than it looks', '空亡——容易延误，不如表面稳固')}` : ''}${c.ma ? `<br>🐎 ${L('Horse — movement and speed', '驿马——动、快')}` : ''}` : '—';
   let h = cardsIntro('Qi Men is a map of directions and timing. First your birth "strategy", then what\'s favourable right now.', '奇门是方位与时机的地图。先看你出生时的“策略”，再看此刻的吉凶。');
+  if (!qb.unknown) {
   const self = qb.stemPalace(b.dm);
   h += card('🧭', L('Your natural strategy (birth chart)', '你的天生策略（命局）'), self ? self.tone : 'mixed', qb.yang ? L('Proactive — you like to move first', '主动型——喜欢先出手') : L('Strategic — you like to choose the moment', '谋定型——喜欢等待时机'),
     `<p>${L(`Your position: <b>${dirName(self && self.p)}</b>`, `你的位置：<b>${dirName(self && self.p)}</b>`)}</p><p class="small">${cellLine(self)}</p>`,
@@ -2589,6 +2609,7 @@ function qmCards() {
   const good = Object.values(qb.cells).filter(c => c.p !== 5 && c.tone === 'good' && !c.kong).map(c => dirName(c.p));
   h += card('🍀', L('Your supportive directions', '对你有利的方位'), good.length ? 'good' : 'mixed', good.join(L(', ', '、')) || L('None stand out', '没有特别突出'),
     `<p>${L('Good directions for your desk, bed head or travel.', '适合书桌、床头朝向或出行的方向。')}</p>`, null, null, '命局吉门吉星吉神且不空亡');
+  }
   // now
   const be = qmBlockEnd(qn);
   const cells = Object.values(qn.cells).filter(c => c.p !== 5);
@@ -2990,8 +3011,8 @@ function guideYour() {
   const set = (k, html) => { const el = document.querySelector(`.gyour[data-k="${k}"]`); if (el) el.innerHTML = `<div class="yours"><b>${L('In your chart', '你的命盘')}</b> ${html}</div>`; };
   const t = b.times;
   const tzs = `UTC${inp.tz >= 0 ? '+' : ''}${+inp.tz.toFixed(2)}`;
-  set('time', L(`Clock ${fmt(inp.wall)} at ${tzs}, longitude ${inp.lon}° → correction ${t.correctionMin} min (equation of time ${t.eot} min) → true solar <b>${fmt(t.tst)}</b> → ${b.pillars[3].zhi} hour. Solar term in force: <b>${b.jieqi}</b>.`,
-    `钟表时间 ${fmt(inp.wall)}（${tzs}），经度 ${inp.lon}° → 修正 ${t.correctionMin} 分钟（均时差 ${t.eot} 分钟）→ 真太阳时 <b>${fmt(t.tst)}</b> → ${b.pillars[3].zhi}时。当时节气：<b>${b.jieqi}</b>。`));
+  set('time', L(`Clock ${fmt(inp.wall)} at ${tzs}, longitude ${inp.lon}° → correction ${t.correctionMin} min (equation of time ${t.eot} min) → true solar <b>${fmt(t.tst)}</b> → ${b.pillars[3] ? b.pillars[3].zhi + ' hour' : 'hour unknown'}. Solar term in force: <b>${b.jieqi}</b>.`,
+    `钟表时间 ${fmt(inp.wall)}（${tzs}），经度 ${inp.lon}° → 修正 ${t.correctionMin} 分钟（均时差 ${t.eot} 分钟）→ 真太阳时 <b>${fmt(t.tst)}</b> → ${b.pillars[3] ? b.pillars[3].zhi + '时' : '时辰不详'}。当时节气：<b>${b.jieqi}</b>。`));
   set('pillars', b.pillars.map(p => L(`${p.en} <b>${p.gz}</b> (#${p.jiazi} of 60)`, `${p.zh} <b>${p.gz}</b>（六十甲子第 ${p.jiazi}）`)).join(' · ') + L(`. You are the Day stem <b>${b.dm}</b>.`, `。你是日干 <b>${b.dm}</b>。`));
   set('hidden', b.pillars.map(p => `${p.zhi} → ${p.hidden.map(x => x.stem).join('')}`).join(' · '));
   const tot = b.scores.reduce((a, c) => a + c, 0);
@@ -3011,7 +3032,7 @@ function guideYour() {
     `年干 ${b.pillars[0].gan} 为${stemYang(b.pillars[0].gan) ? '阳' : '阴'}，${b.gender ? '男' : '女'}命 → 从月柱 ${b.pillars[1].gz} <b>${fwd ? '顺排' : '逆排'}</b>。第一步大运 ${d0.gz} 于出生后 ${b.yunStart.y} 年 ${b.yunStart.m} 个月 ${b.yunStart.d} 天起运（${d0.startYear} 年）。`));
   set('stages', b.pillars.map(p => `${p.zhi}：${LIFE_STAGES[p.stage]}`).join(' · '));
   const life = zw.byName('命宫');
-  set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}). Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始）。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
+  if (!zw.unknown) set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}). Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始）。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
   set('qmbasics', L(`Now: ${q.dayGZ} day, ${q.hourGZ} hour, solar term ${q.jq} → <b>${q.yang ? 'Yang' : 'Yin'}</b>, ${q.yuan}, Ju <b>${q.ju}</b>. 旬首 ${q.xunName} hides under ${q.xunYi} → lead star ${q.zfStar} moves to ${QM_PALACE[q.zfPalace]}; lead door ${q.zsDoor} moves to ${QM_PALACE[q.zsPalace]}. Void ${q.kongBr.join('')}.`,
     `此刻：${q.dayGZ}日 ${q.hourGZ}时，节气 ${q.jq} → <b>${q.yang ? '阳遁' : '阴遁'}</b>，${q.yuan}，<b>${q.ju}局</b>。旬首 ${q.xunName} 遁于 ${q.xunYi} → 值符 ${q.zfStar} 移至 ${QM_PALACE[q.zfPalace].split(' ')[0]}宫；值使 ${q.zsDoor} 移至 ${QM_PALACE[q.zsPalace].split(' ')[0]}宫。空亡 ${q.kongBr.join('')}。`));
 }

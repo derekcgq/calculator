@@ -7,7 +7,7 @@ const ELN = e => L(EL_EN[e], EL[e]);
 const UI_TXT = {
   title: ['四柱 · 紫微 · 奇门 Destiny Calculator', '四柱 · 紫微 · 奇门 命理计算器'],
   sub: ['BaZi Four Pillars with Ten Gods, Five Elements and Luck Pillars — cross-referenced with Zi Wei Dou Shu and Qi Men Dun Jia.', '八字四柱（十神、五行、大运），并与紫微斗数、奇门遁甲交叉参照。'],
-  name: ['Name (optional)', '姓名（可选）'], bdate: ['Birth date', '出生日期'], btime: ['Birth time (clock)', '出生时间（钟表时间）'],
+  notime: ['Birth time unknown', '不知道出生时间'], name: ['Name (optional)', '姓名（可选）'], bdate: ['Birth date', '出生日期'], btime: ['Birth time (clock)', '出生时间（钟表时间）'],
   gender: ['Gender', '性别'], place: ['Birthplace', '出生地'], lon: ['Longitude °E', '经度 °E'], tz: ['UTC offset at birth', '出生时的时区（UTC±）'],
   zi: ['Zi hour rule 子时', '子时规则'], zi23: ['Day changes at 23:00 (traditional)', '23:00 换日（传统）'], zi00: ['Day changes at 00:00', '00:00 换日'],
   tst: ['Use true solar time 真太阳时', '使用真太阳时'], qauto: ['Query time = now (auto-updates)', '查询时间 = 现在（自动更新）'],

@@ -145,6 +145,7 @@ function qmCards() {
   const {qmBirth: qb, qmNow: qn, bazi: b} = STATE;
   const cellLine = c => c ? `${L('Door', '门')}: <b>${c.door || '—'}</b> — ${plainDoor(c.door) || '—'}<br>${L('Star', '星')}: <b>${c.star}</b> — ${qStar(c.star)}<br>${L('Spirit', '神')}: <b>${c.god || '—'}</b> — ${qGod(c.god)}${c.kong ? `<br>⚠️ ${L('Void — delays, less solid than it looks', '空亡——容易延误，不如表面稳固')}` : ''}${c.ma ? `<br>🐎 ${L('Horse — movement and speed', '驿马——动、快')}` : ''}` : '—';
   let h = cardsIntro('Qi Men is a map of directions and timing. First your birth "strategy", then what\'s favourable right now.', '奇门是方位与时机的地图。先看你出生时的“策略”，再看此刻的吉凶。');
+  if (!qb.unknown) {
   const self = qb.stemPalace(b.dm);
   h += card('🧭', L('Your natural strategy (birth chart)', '你的天生策略（命局）'), self ? self.tone : 'mixed', qb.yang ? L('Proactive — you like to move first', '主动型——喜欢先出手') : L('Strategic — you like to choose the moment', '谋定型——喜欢等待时机'),
     `<p>${L(`Your position: <b>${dirName(self && self.p)}</b>`, `你的位置：<b>${dirName(self && self.p)}</b>`)}</p><p class="small">${cellLine(self)}</p>`,
@@ -158,6 +159,7 @@ function qmCards() {
   const good = Object.values(qb.cells).filter(c => c.p !== 5 && c.tone === 'good' && !c.kong).map(c => dirName(c.p));
   h += card('🍀', L('Your supportive directions', '对你有利的方位'), good.length ? 'good' : 'mixed', good.join(L(', ', '、')) || L('None stand out', '没有特别突出'),
     `<p>${L('Good directions for your desk, bed head or travel.', '适合书桌、床头朝向或出行的方向。')}</p>`, null, null, '命局吉门吉星吉神且不空亡');
+  }
   // now
   const be = qmBlockEnd(qn);
   const cells = Object.values(qn.cells).filter(c => c.p !== 5);

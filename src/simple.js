@@ -50,6 +50,7 @@ function simpleHtml() {
   const W = r => r ? r.items.map(x => `<b>${x.sys}:</b> ${esc(x.txt)}`).join('<br>') : '';
   const dom = b.dominant[0][0];
   const P = n => zw.byName(n);
+  const ZWT = t => zw.unknown ? '' : t;
   const zh = LANG === 'zh';
   let h = '';
   const glance = [];
@@ -118,7 +119,7 @@ function simpleHtml() {
   h += C('👨‍👩‍👧', L('Family — parents & children', '家庭——父母与子女'), overall(famT), null,
     `<p><b>${L('Parents / elders:', '父母／长辈：')}</b> ${tw(parE.tone, ['generally supportive','a relationship that needs patience','a mixed, normal relationship'], ['大体支持你','需要多些耐心的关系','好坏参半、正常的关系'])}${starsShort(parE)}${yearClash ? L('; some distance or differences with family background', '；与家庭背景有些距离或分歧') : ''}${L('.', '。')}</p>
      <p><b>${L('Children:', '子女：')}</b> ${tw(kidE.tone, ['a source of joy and pride','parenting takes extra effort and patience','a balanced, normal picture'], ['带来快乐与骄傲','养育需要更多心力与耐心','平稳、正常'])}${starsShort(kidE)}${hourClash ? L('; differences of opinion with children are likely — give them independence', '；与子女容易有意见分歧——给他们独立空间') : ''}${L('.', '。')}</p>`,
-    null, null, `Zi Wei 父母: ${parE.stars.map(s => s.name).join('+') || '—'} (${parE.tone}); 子女: ${kidE.stars.map(s => s.name).join('+') || '—'} (${kidE.tone}). BaZi Year pillar = parents, Hour pillar = children${yearClash || hourClash ? '; clashes present' : ''}.`);
+    null, null, ZWT(`Zi Wei 父母: ${parE.stars.map(s => s.name).join('+') || '—'} (${parE.tone}); 子女: ${kidE.stars.map(s => s.name).join('+') || '—'} (${kidE.tone}). BaZi Year pillar = parents, Hour pillar = children${yearClash || hourClash ? '; clashes present' : ''}.`));
 
   // Friends
   const frE = zw.evalPalace(P('仆役'));
@@ -127,7 +128,7 @@ function simpleHtml() {
     `<p>${tw(frE.tone, ['Friends and teammates tend to help you.','Choose your circle carefully — not everyone has your interests at heart.','A mixed circle — some helpers, some drainers.'], ['朋友和队友多半会帮你。','慎选身边的人——不是每个人都为你着想。','圈子好坏参半——有贵人，也有消耗你的人。'])}
        ${compet ? L(' You have a competitive streak with peers; it pushes you, but watch shared money with friends.', '你和同辈之间有好胜心，能激励你，但和朋友之间的金钱往来要小心。') : ''}</p>
      ${frE.stars.length ? `<p>${L('Your circle tends to be: ', '你的圈子多是：')}${frE.stars.map(s => plainStar(s.name)).join(SEP())}${L('.', '。')}</p>` : ''}`,
-    compet ? L('Keep money and friendship separate.', '钱和友情要分开。') : null, null, `Zi Wei 仆役: ${frE.stars.map(s => s.name).join('+') || '—'}${frE.notes.length ? ' · ' + frE.notes.join(', ') : ''}. BaZi Companion ${b.groupScore.peer.toFixed(1)}.`);
+    compet ? L('Keep money and friendship separate.', '钱和友情要分开。') : null, null, ZWT(`Zi Wei 仆役: ${frE.stars.map(s => s.name).join('+') || '—'}${frE.notes.length ? ' · ' + frE.notes.join(', ') : ''}. BaZi Companion ${b.groupScore.peer.toFixed(1)}.`));
 
   // Health
   const tot = b.scores.reduce((a, c) => a + c, 0);
@@ -141,14 +142,14 @@ function simpleHtml() {
         `需要多照顾：<b>${organs}</b>（因为命盘中有五行${hi.length ? '过旺' : ''}${hi.length && lo.length ? '或' : ''}${lo.length ? '过弱' : ''}）。`)
       : L('Your elements are fairly balanced — no single body area stands out.', '你的五行比较平衡——没有特别需要担心的身体部位。')}</p>
      <p>${hE.tone === 'warn' ? L('Stress tends to show up physically — build in rest.', '压力容易反映在身体上——要安排休息。') : L('Your general constitution reads as steady.', '整体体质较为稳定。')}</p>`,
-    L('Traditional indications only — not medical advice.', '仅为传统命理参考，不构成医疗建议。'), null, `${b.scores.map((s, e) => EL[e] + ' ' + Math.round(s / tot * 100) + '%').join(', ')}. Zi Wei 疾厄: ${hE.stars.map(s => s.name).join('+') || '—'} (${hE.tone}).`);
+    L('Traditional indications only — not medical advice.', '仅为传统命理参考，不构成医疗建议。'), null, `${b.scores.map((s, e) => EL[e] + ' ' + Math.round(s / tot * 100) + '%').join(', ')}${ZWT(`. Zi Wei 疾厄: ${hE.stars.map(s => s.name).join('+') || '—'} (${hE.tone}).`)}`);
 
   // Home
   const homeE = zw.evalPalace(P('田宅'));
   h += C('🏠', L('Home & property', '家宅与房产'), homeE.tone, null,
     `<p>${tw(homeE.tone, ['Property and home are a source of stability and gains for you.','Home and property decisions need extra care — check details twice.','Home and property are a normal, mixed area.'], ['房产和家庭能为你带来稳定与收获。','买房、搬家等决定要格外谨慎——细节多核对。','家宅方面属于正常、好坏参半。'])}
       ${b.groupScore.resource >= 2 ? L(' Owning a base matters to your sense of security.', '有自己的房子对你的安全感很重要。') : ''}</p>`,
-    null, null, `Zi Wei 田宅: ${homeE.stars.map(s => s.name + (s.m ? '化' + s.m : '')).join('+') || '—'}${homeE.notes.length ? ' · ' + homeE.notes.join(', ') : ''}.`);
+    null, null, ZWT(`Zi Wei 田宅: ${homeE.stars.map(s => s.name + (s.m ? '化' + s.m : '')).join('+') || '—'}${homeE.notes.length ? ' · ' + homeE.notes.join(', ') : ''}.`));
 
   // Timeline
   const cd = b.daYun.findIndex(d => qYear >= d.startYear && qYear <= d.endYear);

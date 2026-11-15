@@ -78,12 +78,13 @@ function histTz(preset, y, m, d) {
 
 function readForm() {
   const [y, m, d] = $('#bdate').value.split('-').map(Number);
-  const [h, mi] = $('#btime').value.split(':').map(Number);
+  const noHour = $('#notime').checked;
+  const [h, mi] = noHour ? [12, 0] : $('#btime').value.split(':').map(Number);
   const [qy, qm, qd] = $('#qdate').value.split('-').map(Number);
   const [qh, qmi] = $('#qtime').value.split(':').map(Number);
   return {
     wall: [y, m, d, h, mi], tz: parseFloat($('#tz').value), lon: parseFloat($('#lon').value),
-    useTST: $('#tst').checked, gender: $('#gender').value === 'm' ? 1 : 0, ziRule: $('#zi').value,
+    useTST: noHour ? false : $('#tst').checked, noHour, gender: $('#gender').value === 'm' ? 1 : 0, ziRule: $('#zi').value,
     preset: $('#place').value, qwall: [qy, qm, qd, qh, qmi], qtz: parseFloat($('#qtz').value),
     name: $('#pname').value.trim(),
   };
@@ -108,20 +109,27 @@ function syncQueryMode() {
     $('#qnowtxt').textContent = L(`Using ${n.date} ${n.time} (UTC${n.tz >= 0 ? '+' : ''}${n.tz})`, `使用 ${n.date} ${n.time}（UTC${n.tz >= 0 ? '+' : ''}${n.tz}）`);
   } else $('#qnowtxt').textContent = '';
 }
+// Placeholders used when the birth hour is unknown: Zi Wei and the Qi Men birth chart both need it
+const NEUTRAL_PALACE = {name: '', en: '', stem: '', branch: '', isBody: false, major: [], minor: [], adj: [], decadal: [0, 0]};
+const NEUTRAL_CELL = {p: 5, name: '', door: '', star: '', god: '', earth: '', heaven: '', tone: 'mixed', kong: false, ma: false, score: 0};
+const ZW_STUB = {unknown: true, palaces: [], mutLoc: {}, current: null, lunarDate: '', time: '', fiveClass: '',
+  byName: () => NEUTRAL_PALACE, opposite: () => NEUTRAL_PALACE, evalPalace: () => ({score: 0, tone: 'mixed', stars: [], borrowed: false, notes: []})};
+const QM_STUB = {unknown: true, yang: true, ju: 0, jq: '', yuan: '', cells: {}, stemPalace: () => null, doorPalace: () => NEUTRAL_CELL, godPalace: () => NEUTRAL_CELL, starPalace: () => NEUTRAL_CELL};
+const NOHOUR_NOTE = () => `<div class="card"><b>${L('Birth time unknown', '出生时间不详')}</b><p class="small muted">${L('Your chart uses the Year, Month and Day pillars only. The Hour pillar, the Zi Wei Dou Shu chart and the Qi Men birth chart all depend on the exact birth time, so they are left out rather than guessed. If a parent or document can narrow the time to even a rough window, enter it to unlock them.', '你的命盘只用年柱、月柱、日柱。时柱、紫微斗数命盘与奇门命局都依赖精确的出生时间，所以不作猜测，暂不显示。若能向家人或证件问到大致时段，填入后即可解锁。')}</p></div>`;
 function calculate(scroll = true) {
   syncQueryMode();
   const inp = readForm();
   if (!inp.wall.every(n => !isNaN(n)) || isNaN(inp.tz) || isNaN(inp.lon)) { $('#err').textContent = L('Please complete birth date, time, longitude and UTC offset.', '请填写完整的出生日期、时间、经度和时区。'); return; }
   $('#err').textContent = '';
-  try { localStorage.setItem('fp-input', JSON.stringify({b: $('#bdate').value, t: $('#btime').value, g: $('#gender').value, p: $('#place').value, lon: $('#lon').value, tz: $('#tz').value, tst: $('#tst').checked, zi: $('#zi').value, n: $('#pname').value})); } catch (e) {}
+  try { localStorage.setItem('fp-input', JSON.stringify({b: $('#bdate').value, t: $('#btime').value, g: $('#gender').value, p: $('#place').value, lon: $('#lon').value, tz: $('#tz').value, nt: $('#notime').checked, tst: $('#tst').checked, zi: $('#zi').value, n: $('#pname').value})); } catch (e) {}
   const bazi = computeBazi(inp);
   const qUtc = Date.UTC(inp.qwall[0], inp.qwall[1] - 1, inp.qwall[2], inp.qwall[3], inp.qwall[4]) - inp.qtz * 3600e3;
   const queryDate = new Date(qUtc);
-  const zw = computeZiwei(inp, bazi, queryDate);
-  const qmBirth = computeQimen(inp.wall, inp.tz, inp.lon, inp.useTST, inp.ziRule);
+  const zw = inp.noHour ? ZW_STUB : computeZiwei(inp, bazi, queryDate);
+  const qmBirth = inp.noHour ? QM_STUB : computeQimen(inp.wall, inp.tz, inp.lon, inp.useTST, inp.ziRule);
   const qmNow = computeQimen(inp.qwall, inp.qtz, inp.lon, inp.useTST, inp.ziRule);
   const qYear = new Date(qUtc + 8 * 3600e3).getUTCFullYear();
-  STATE = {inp, bazi, zw, qmBirth, qmNow, qYear, qmView: (STATE && STATE.qmView) || 'birth'};
+  STATE = {inp, bazi, zw, qmBirth, qmNow, qYear, qmView: inp.noHour ? 'now' : (STATE && STATE.qmView) || 'birth'};
   render();
   $('#results').hidden = false;
   { const cur = location.hash.slice(1); showTab(!cur || (cur === 'guide' && scroll) ? 'summary' : cur); }
@@ -130,6 +138,7 @@ function calculate(scroll = true) {
 
 function render() {
   renderBazi(); renderZiwei(); renderQimen(); renderCross(); initCompat(); guideYour(); renderReading(); renderSimple(); zhScope();
+  if (STATE.inp.noHour) $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE());
 }
 
 // ---------- BaZi ----------
@@ -154,6 +163,7 @@ function renderBazi() {
       <div class="pfoot"><span>${LIFE_STAGES[p.stage]} <small>${LIFE_STAGES_EN[p.stage]} — ${STAGE_PLAIN[p.stage]}</small></span><span>${esc(p.nayin)}</span><span class="muted">#${p.jiazi}/60 · ages ${p.ages}</span></div>
     </div>`;
   });
+  if (!b.hourKnown) h += `<div class="pillar" style="opacity:.55"><div class="ptitle">时柱 Hour</div><div class="pmean">${L('Needs the birth time', '需要出生时间')}</div><div class="pchars"><span class="ch big">?</span><div class="sub">&nbsp;</div><span class="ch big">?</span></div></div>`;
   h += `</div><p class="muted small">Day pillar void (空亡): ${b.kong.join('')} · Palace ages are the classical guide (year 0–16, month 17–32, day 33–48, hour 49+).</p>`;
 
   // Elements
@@ -237,6 +247,7 @@ function starHtml(s, cls) {
   return `<span class="st ${cls}">${s.name}${s.b ? `<i>${s.b}</i>` : ''}${s.m ? `<em class="m-${s.m}">${s.m}</em>` : ''}</span>`;
 }
 function renderZiwei() {
+  if (STATE.zw.unknown) { $('#tab-ziwei').innerHTML = NOHOUR_NOTE(); return; }
   const {zw} = STATE;
   const cur = zw.current;
   let h = `<div class="card meta"><div>Lunar ${esc(zw.lunarDate)} · ${esc(zw.chineseDate)} · ${esc(zw.time)} (${esc(zw.timeRange)})</div><div class="muted">Five Element Bureau 五行局: <b>${esc(zw.fiveClass)}</b> · Life master 命主: <b>${esc(zw.soul)}</b> · Body master 身主: <b>${esc(zw.body)}</b></div></div>`;
@@ -281,8 +292,8 @@ function showZwPalace(i) {
 const QM_GRID = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
 function renderQimen() {
   const {qmBirth, qmNow, qmView} = STATE;
-  const q = qmView === 'birth' ? qmBirth : qmNow;
-  let h = `<div class="seg"><button data-v="birth" class="${qmView === 'birth' ? 'on' : ''}">Birth chart 命局</button><button data-v="now" class="${qmView === 'now' ? 'on' : ''}">Query time 时局</button></div>
+  const q = qmView === 'birth' && !qmBirth.unknown ? qmBirth : qmNow;
+  let h = qmBirth.unknown ? `<div class="seg" hidden><button data-v="now"></button></div>` : `<div class="seg"><button data-v="birth" class="${qmView === 'birth' ? 'on' : ''}">Birth chart 命局</button><button data-v="now" class="${qmView === 'now' ? 'on' : ''}">Query time 时局</button></div>
   <div class="card meta"><div><b>${fmt(q.times.local)}</b> ${STATE.inp.useTST ? '(true solar)' : ''} · ${q.dayGZ}日 ${q.hourGZ}时 · ${q.jq} ${q.yuan} · <b>${q.yang ? '阳遁 Yang' : '阴遁 Yin'} ${q.ju}局</b></div>
   <div class="muted">旬首 ${q.xunName}(${q.xunYi}) · 值符 ${q.zfStar} → ${QM_PALACE[q.zfPalace]} · 值使 ${q.zsDoor} → ${QM_PALACE[q.zsPalace]} · 空亡 ${q.kongBr.join('')} · 驿马 ${q.maBr}</div></div>
   ${ex('How to read the Qi Men chart', QM_HOWTO)}
@@ -372,6 +383,7 @@ function renderCross() {
     {sys: 'Qi Men', t: qHour ? qHour.tone : 'mixed', txt: `Query-time chart: hour stem ${qn.hourGZ[0]} in ${qHour ? qHour.name + ' (' + (qHour.door || '—') + ', ' + qHour.star + ')' : '—'}; 值使 ${qn.zsDoor} → ${QM_PALACE[qn.zsPalace]}.`},
   ]});
 
+  if (qb.unknown) rows.forEach(r => { r.items = r.items.filter(x => x.sys === 'BaZi' || (x.sys === 'Qi Men' && x.txt.startsWith('Query-time'))); });
   STATE.crossRows = rows;
   let h = ex('How to read the cross-reference', CROSS_HOWTO, true) + `<p class="muted small">Each row reads the same life area through three independent systems. Agreement across systems is the signal worth paying attention to; a lone result is a weaker hint. Qi Men natal rows use the birth-hour chart; "Now" uses the query time.</p>`;
   rows.forEach(r => {
@@ -389,8 +401,8 @@ function renderCross() {
   const hits = [hoStrength >= 1, lifeRebel.length > 0 || quan, !!qmExp].filter(Boolean).length;
   h += `<div class="card ho"><h4>伤官 Hurting Officer signature — cross-check <span class="agree ${hits >= 2 ? 'good' : 'mixed'}">${hits}/3 systems</span></h4>
     <div class="xi"><span class="sys">BaZi</span><div>${hoStrength ? `Hurting Officer ${b.ho.visible.length ? 'visible' : 'hidden (main qi)'} ×${hoStrength}${b.ho.patterns.length ? ' — ' + b.ho.patterns.map(p => p.name.split(' ')[0]).join(', ') : ''}` : (b.ho.present ? 'Only residual/middle-qi Hurting Officer — mild.' : 'No natal Hurting Officer.')}</div></div>
-    <div class="xi"><span class="sys">Zi Wei</span><div>${lifeRebel.length ? `Independent/outspoken stars in Life palace: ${lifeRebel.join(', ')}.` : 'No strongly rule-challenging star in Life palace.'}${quan ? ` 化权 in ${zw.mutLoc['权'].palace.name} — assertive drive.` : ''}</div></div>
-    <div class="xi"><span class="sys">Qi Men</span><div>${qmExp ? `Day stem palace carries ${qSelf.door}/${qSelf.star} — expressive, confrontational or visibility-seeking energy.` : `Day stem palace (${qSelf ? qSelf.door + '/' + qSelf.star : '—'}) does not emphasise expression.`}</div></div>
+    ${qb.unknown ? '' : `<div class="xi"><span class="sys">Zi Wei</span><div>${lifeRebel.length ? `Independent/outspoken stars in Life palace: ${lifeRebel.join(', ')}.` : 'No strongly rule-challenging star in Life palace.'}${quan ? ` 化权 in ${zw.mutLoc['权'].palace.name} — assertive drive.` : ''}</div></div>`}
+    ${qb.unknown ? '' : `<div class="xi"><span class="sys">Qi Men</span><div>${qmExp ? `Day stem palace carries ${qSelf.door}/${qSelf.star} — expressive, confrontational or visibility-seeking energy.` : `Day stem palace (${qSelf ? qSelf.door + '/' + qSelf.star : '—'}) does not emphasise expression.`}</div></div>`}
     <p class="small muted">Analogy used: BaZi 伤官 (talent that defies rules) ↔ Zi Wei 破军/七杀/贪狼/廉贞/巨门 or 化权 in the Life/Career palace ↔ Qi Men 伤门/惊门/景门 or 天冲/天英 on the Day stem.</p></div>`;
   $('#tab-cross').innerHTML = crossCards() + techWrap(h, 'cross');
 }
@@ -442,11 +454,12 @@ function init() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('fp-input') || 'null'); } catch (e) {}
   if (saved) {
-    $('#bdate').value = saved.b; $('#btime').value = saved.t; $('#gender').value = saved.g; sel.value = saved.p || 'sg';
+    $('#bdate').value = saved.b; $('#btime').value = saved.t; $('#notime').checked = !!saved.nt; $('#btime').disabled = !!saved.nt; $('#gender').value = saved.g; sel.value = saved.p || 'sg';
     $('#tst').checked = saved.tst !== false; $('#zi').value = saved.zi || '23'; $('#pname').value = saved.n || '';
     setPreset(); if (saved.p === 'custom') { $('#lon').value = saved.lon; $('#tz').value = saved.tz; }
   } else { sel.value = 'sg'; setPreset(); }
   sel.onchange = setPreset;
+  $('#notime').onchange = () => { $('#btime').disabled = $('#notime').checked; };
   $('#bdate').onchange = updateTz;
   // Auto "now": refresh every minute; re-render when the Chinese hour (and so the Qi Men chart) changes
   setInterval(() => {
