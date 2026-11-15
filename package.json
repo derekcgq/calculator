@@ -1,0 +1,9 @@
+{
+  "name": "destiny-calculator",
+  "version": "1.0.0",
+  "description": "BaZi (Four Pillars) calculator cross-referenced with Zi Wei Dou Shu and Qi Men Dun Jia, in English and Chinese.",
+  "private": true,
+  "scripts": { "build": "node build.js" },
+  "dependencies": { "iztro": "^2.6.5", "lunar-javascript": "^1.7.8" },
+  "devDependencies": { "esbuild": "^0.28.2" }
+}
