@@ -2402,6 +2402,21 @@ function simpleHtml() {
   h += C('📅', L('Your life in 10-year seasons', '人生的十年季节'), 'info', L('Good, mixed and harder decades', '顺利、起伏与较辛苦的十年'), `<div class="tlwrap">${tl}</div>`,
     L('Every life has all three kinds of seasons — plan big moves for the sunny ones, and build skills in the cloudy ones.', '每个人的人生都有这三种季节——在晴天做大决定，在阴天积累本领。'), null, L("Each decade is a BaZi Luck Pillar, rated by whether its elements help your chart's balance.", '每个十年即八字大运，依其五行是否有助命局平衡来评分。'));
 
+  // Zi Wei 10-year palaces in plain words (needs the birth hour)
+  if (!zw.unknown && zw.palaces.length) {
+    const curZ = zw.current, TI = {good: '☀️', warn: '🌧', mixed: '⛅'};
+    const rowsZ = [...zw.palaces].sort((a, c) => a.decadal[0] - c.decadal[0]).map(p => {
+      const ev = zw.evalPalace(p), now = curZ && curZ.decadal.i === p.i;
+      return `<div class="tl ${now ? 'now' : ''}"><span class="tl-ic">${TI[ev.tone] || '⛅'}</span><div><b>${L(`Age ${p.decadal[0]}–${p.decadal[1]}`, `${p.decadal[0]}–${p.decadal[1]} 岁`)}</b> <span class="muted small">${now ? L('← you are here', '← 你现在在这里') : ''}</span><br>
+        <span class="small">${L('Spotlight on', '重心在')} <b>${esc(palPlain(p.name).toLowerCase ? (LANG === 'zh' ? palPlain(p.name) : palPlain(p.name).toLowerCase()) : palPlain(p.name))}</b>${L(' — ', '——')}${ev.tone === 'good' ? L('things tend to flow here.', '这方面比较顺。') : ev.tone === 'warn' ? L('expect to work harder here.', '这方面需要多下功夫。') : L('a mix of ups and downs.', '有起有落。')}</span></div></div>`;
+    }).join('');
+    const nowTxt = curZ ? L(`Right now (ages ${curZ.decadal.decadal[0]}–${curZ.decadal.decadal[1]}) your life's spotlight is on <b>${palPlain(curZ.decadal.name).toLowerCase()}</b>; this year it moves to <b>${palPlain(curZ.yearly.name).toLowerCase()}</b>.`, `你现在（${curZ.decadal.decadal[0]}–${curZ.decadal.decadal[1]} 岁）人生的重心在<b>${palPlain(curZ.decadal.name)}</b>；今年的重点转到<b>${palPlain(curZ.yearly.name)}</b>。`) : '';
+    h += C('🔭', L('Which part of life each decade focuses on', '每个十年人生的重心'), curZ ? zw.evalPalace(curZ.decadal).tone : 'info', L('Zi Wei 10-year palaces', '紫微大限'),
+      `${nowTxt ? `<p>${nowTxt}</p>` : ''}<div class="tlwrap">${rowsZ}</div>`,
+      L('Use it as a theme guide: each decade puts one area of life centre stage — career, money, family, health and so on.', '把它当作主题指南：每个十年会让人生的某一个领域成为主角——事业、财运、家庭、健康等。'), null,
+      L('Zi Wei 大限: the 12 palaces take turns as the 10-year stage, starting from the Life palace.', '紫微大限：十二宫依序各管十年，从命宫起算。'));
+  }
+
   // This year / next
   const yr = y => {
     const d = b.daYun.find(x => y >= x.startYear && y <= x.endYear); if (!d) return '';
