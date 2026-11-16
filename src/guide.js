@@ -24,7 +24,7 @@ function guideHtml() {
   h += G('time', 'True solar time 真太阳时 & solar terms 节气',
     'A <b>sundial versus your phone clock</b>. Every Chinese system was designed around where the sun actually is. Singapore\'s clock is set to UTC+8 (China\'s time zone), but the sun over Singapore is about an hour "behind" that clock, so 10:30 on the clock is roughly 09:25 by the sun. A different 2-hour block means a different hour pillar.',
     STEPS([
-      'Convert your clock time to universal time using the UTC offset at birth (Singapore used +7:30 before 1982; the tool sets this automatically).',
+      'Convert your clock time to universal time using the UTC offset at birth (Singapore ran on +7:30 from 1945 to 1981 and on other offsets before that; the tool sets this automatically).',
       'Longitude correction: 4 minutes per degree east of Greenwich (Singapore 103.8°E → UTC + 6h55m).',
       'Equation of time: Earth\'s tilted, elliptical orbit makes the sun run up to ±16 minutes fast or slow through the year.',
       'Year and month use <b>solar terms</b>, not Lunar New Year. The BaZi year starts at 立春 (~4 Feb); each month starts at a 节 (e.g. 惊蛰 ~6 Mar). A baby born on 2 Feb belongs to the previous year in BaZi.',

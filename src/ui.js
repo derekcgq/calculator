@@ -69,7 +69,9 @@ function histTz(preset, y, m, d) {
     return r && v >= y * 10000 + r[0][0] * 100 + r[0][1] && v < y * 10000 + r[1][0] * 100 + r[1][1] ? 9 : null;
   }
   if (p.hist !== 'sgmy') return null;
-  if (v < 19330101) return 7 + 1/3;
+  if (v < 19050601) return 6 + 55.4 / 60;   // Singapore Mean Time
+  if (v < 19330101) return 7;
+  if (v < 19410901) return 7 + 1/3;           // UTC+7:20
   if (v < 19420216) return 7.5;
   if (v < 19450912) return 9;
   if (v < 19820101) return 7.5;

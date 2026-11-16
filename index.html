@@ -826,7 +826,9 @@ function histTz(preset, y, m, d) {
     return r && v >= y * 10000 + r[0][0] * 100 + r[0][1] && v < y * 10000 + r[1][0] * 100 + r[1][1] ? 9 : null;
   }
   if (p.hist !== 'sgmy') return null;
-  if (v < 19330101) return 7 + 1/3;
+  if (v < 19050601) return 6 + 55.4 / 60;   // Singapore Mean Time
+  if (v < 19330101) return 7;
+  if (v < 19410901) return 7 + 1/3;           // UTC+7:20
   if (v < 19420216) return 7.5;
   if (v < 19450912) return 9;
   if (v < 19820101) return 7.5;
@@ -2894,7 +2896,7 @@ function guideHtml() {
   h += G('time', 'True solar time 真太阳时 & solar terms 节气',
     'A <b>sundial versus your phone clock</b>. Every Chinese system was designed around where the sun actually is. Singapore\'s clock is set to UTC+8 (China\'s time zone), but the sun over Singapore is about an hour "behind" that clock, so 10:30 on the clock is roughly 09:25 by the sun. A different 2-hour block means a different hour pillar.',
     STEPS([
-      'Convert your clock time to universal time using the UTC offset at birth (Singapore used +7:30 before 1982; the tool sets this automatically).',
+      'Convert your clock time to universal time using the UTC offset at birth (Singapore ran on +7:30 from 1945 to 1981 and on other offsets before that; the tool sets this automatically).',
       'Longitude correction: 4 minutes per degree east of Greenwich (Singapore 103.8°E → UTC + 6h55m).',
       'Equation of time: Earth\'s tilted, elliptical orbit makes the sun run up to ±16 minutes fast or slow through the year.',
       'Year and month use <b>solar terms</b>, not Lunar New Year. The BaZi year starts at 立春 (~4 Feb); each month starts at a 节 (e.g. 惊蛰 ~6 Mar). A baby born on 2 Feb belongs to the previous year in BaZi.',
@@ -3075,7 +3077,7 @@ function guideHtmlZh() {
   h += G('time', '真太阳时与节气',
     '<b>日晷 vs 手机时钟</b>。所有中国命理都是以太阳的真实位置为准设计的。新加坡的时钟用 UTC+8（中国时区），但新加坡上空的太阳大约比时钟“慢”一小时，所以钟表上的 10:30 按太阳大约是 09:25。换了两小时时段，时柱就不同了。',
     STEPS([
-      '用出生时的时区把钟表时间换算为世界时（新加坡 1982 年前用 +7:30，工具会自动设定）。',
+      '用出生时的时区把钟表时间换算为世界时（新加坡 1945–1981 年用 +7:30，更早年份另有不同时区，工具会自动设定）。',
       '经度修正：格林威治以东每一度加 4 分钟（新加坡 103.8°E → UTC + 6 小时 55 分）。',
       '均时差：地球轨道倾斜且呈椭圆，太阳一年中会快或慢最多约 ±16 分钟。',
       '年和月以<b>节气</b>为准，而不是农历新年。八字的一年从立春（约 2 月 4 日）开始；每个月从一个“节”开始（如惊蛰约 3 月 6 日）。2 月 2 日出生的婴儿，八字上属于前一年。',
