@@ -1731,6 +1731,7 @@ function zwFly(fromStem, toZw, pals) {
 }
 
 function computeCompat(A, Azw, qmNow, B, Bzw, purposeKey, hourKnown) {
+  if (Azw && Azw.unknown) Azw = null;
   const P = PURPOSES[purposeKey];
   const id = P.ideal(A, B);
   const comp = {}; const notes = [];
@@ -1759,6 +1760,7 @@ function computeCompat(A, Azw, qmNow, B, Bzw, purposeKey, hourKnown) {
   P.pairs.forEach(([ai, bi, w]) => {
     if ((ai === 3 || bi === 3) && !hourKnown && bi === 3) return;
     const a = A.pillars[ai], b = B.pillars[bi];
+    if (!a || !b) return;
     const r = pairInteraction(a, b);
     tw += w; ts += r.score * w;
     const lab = `Your ${a.en} (${a.gz}) × their ${b.en} (${b.gz})`;
@@ -1901,7 +1903,8 @@ function renderCompat(r, B, v, all, notime) {
   const mini = (X, who) => `<div class="cmini"><div class="lbl">${who}</div><div>${X.pillars.map((p, i) => (i === 3 && notime && who === nm) ? '<span class="muted">??</span>' : `${ch(p.gan)}${ch(p.zhi)}`).join(' ')}</div><div class="small x-expert">DM ${ch(X.dm)} ${EL_EN[X.dmEl]} · ${X.label.split(' ')[0]} ${X.label.split(' ').slice(1).join(' ')} · needs ${X.favourable.map(e => EL_EN[e]).join('/')}</div></div>`;
   let h = `<div class="card"><div class="cpair">${mini(A, L('You', '你'))}${mini(B, nm)}</div>
     <div class="cscore"><div class="ring" style="--p:${r.score}"><span>${r.score}</span></div><div><div class="big2">${L(r.verdict, VERDICT_TXT[r.verdict])}</div><div class="muted">${L(`${nm} as your <b>${purposeLabel(r.purposeKey)}</b>`, `${nm}作为你的<b>${purposeLabel(r.purposeKey)}</b>`)}</div>
-    ${notime ? `<div class="small muted">${L('Their birth time unknown — hour pillar and Zi Wei palaces for them are skipped.', '对方出生时间不详——不计算其时柱与紫微宫位。')}</div>` : ''}</div></div>
+    ${notime ? `<div class="small muted">${L('Their birth time unknown — hour pillar and Zi Wei palaces for them are skipped.', '对方出生时间不详——不计算其时柱与紫微宫位。')}</div>` : ''}
+    ${STATE.zw.unknown ? `<div class="small muted">${L('Your own birth time is unknown — your Hour pillar and Zi Wei palaces are left out, so this score rests on BaZi and Qi Men only.', '你自己的出生时间不详——不计算你的时柱与紫微宫位，此分数仅基于八字与奇门。')}</div>` : ''}</div></div>
     <div class="cbars x-expert">${Object.keys(SEC_LABEL).map(k => r.W[k] ? `<div class="cbar"><span>${secLabel(k)} <small class="muted">${Math.round(r.W[k] / Object.values(r.W).reduce((a, c) => a + c, 0) * 100)}%</small></span><div class="dbar"><div style="${r.comp[k] >= 0 ? `left:50%;width:${r.comp[k] * 50}%` : `left:${50 + r.comp[k] * 50}%;width:${-r.comp[k] * 50}%`}" class="${r.comp[k] >= 0 ? 'pos' : 'neg'}"></div></div></div>` : '').join('')}</div></div>`;
   h += compatPlain(r, nm) + `<div class="x-expert">${ex('How the score is calculated', COMPAT_HOWTO)}</div>`;
   h += `<div class="card"><h4>${L('Same pair, different roles', '同一对人，不同关系')}</h4><div class="roles">${all.sort((a, b) => b.s - a.s).map(x => `<button class="role ${x.k === v.purpose ? 'on' : ''}" data-k="${x.k}"><span>${purposeLabel(x.k)}</span><b class="${x.s >= 60 ? 'up' : x.s < 45 ? 'down' : ''}">${x.s}</b></button>`).join('')}</div></div>`;
