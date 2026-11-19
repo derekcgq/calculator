@@ -2077,6 +2077,7 @@ function renderPastLife() {
   ];
   h += `<details class="swhy card"><summary>${L('How this is worked out', '推算方法')}</summary><ol class="steps small">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
     <p class="small muted">${L('This is a modern interpretation written for this tool, not a classical text. There is no evidence that birth data reveals past lives.', '以上为本工具撰写的现代解读，并非古籍原文。没有证据显示出生资料能揭示前世。')}</p></details>`;
+  h += numerologyHtml();
   $('#tab-pastlife').innerHTML = h;
 }
 
@@ -2090,7 +2091,74 @@ function pastLifeGuide() {
       L('Weakest of the Five Elements → the lesson left unfinished (5).', '最弱的五行 → 未完成的功课（5 种）。'),
       L('Hour branch → why you came back (12; needs the birth time).', '时支 → 为什么回来（12 种；需要出生时间）。'),
     ]) +
+    `<p>${L('<b>Numerology</b> works from the calendar date instead. Reduce the month, day and year to single digits (keeping the master numbers 11, 22 and 33), add them, and reduce again to get the Life Path. Example: 30 Oct 1984 → 1 + 3 + 22 = 26 → 8. Totals that pass through 13, 14, 16 or 19 are called karmic debts. Digits missing from the date are read as lessons to pick up.', '<b>数字命理</b>则用公历日期：把月、日、年各自化为个位数（保留大师数 11、22、33），相加后再化简，就是生命灵数。例：1984 年 10 月 30 日 → 1 + 3 + 22 = 26 → 8。过程中出现 13、14、16、19 称为业债；日期里缺少的数字代表要补上的功课。')}</p>` +
     MATTERS([L('Everyone born in the same two-year Na Yin span shares the same past-life role, so the personal part comes from the other three pieces.', '同一纳音的两年内出生的人前世身份相同，个人差异来自其余三部分。'), L('Read it as reflection, not fact.', '请当作反思，而非事实。')]));
+}
+
+// ===== Numerology 数字命理 (Pythagorean, from the calendar birth date) =====
+const NUM_LP = {
+  1:['The Pioneer','开拓者','Independence and starting things. Past-life theme: you followed others, so now you learn to lead.','独立、开创。前世主题：你曾追随别人，今生要学会带头。'],
+  2:['The Peacemaker','调和者','Partnership, tact and patience. Past-life theme: you stood alone; now you learn to cooperate.','合作、圆融、耐心。前世主题：你曾独自承担，今生要学会合作。'],
+  3:['The Communicator','表达者','Creativity, words and joy. Past-life theme: your voice was held back; now you learn to express it.','创意、言语与快乐。前世主题：你曾压抑声音，今生要学会表达。'],
+  4:['The Builder','建设者','Structure, discipline and hard work. Past-life theme: things fell apart; now you learn to build them to last.','秩序、纪律与勤奋。前世主题：事情曾半途而废，今生要学会建得长久。'],
+  5:['The Explorer','探索者','Freedom, change and experience. Past-life theme: you were confined; now you learn to use freedom well.','自由、变化与体验。前世主题：你曾受困，今生要学会善用自由。'],
+  6:['The Nurturer','守护者','Family, responsibility and care. Past-life theme: you neglected home or were neglected; now you learn balanced care.','家庭、责任与关怀。前世主题：你曾忽略家或被忽略，今生要学会平衡的照顾。'],
+  7:['The Seeker','求道者','Study, depth and inner truth. Past-life theme: you lived on the surface; now you look for meaning.','钻研、深度与内在真理。前世主题：你曾活在表面，今生要寻找意义。'],
+  8:['The Achiever','成就者','Power, money and authority. Past-life theme: you either misused power or had none; now you learn to hold it fairly.','权力、财富与权威。前世主题：你曾滥用权力或毫无权力，今生要学会公正地掌握它。'],
+  9:['The Humanitarian','博爱者','Compassion, endings and service. Past-life theme: you are closing a long cycle; now you learn to let go and give back.','慈悲、结束与奉献。前世主题：你正在结束一个长循环，今生要学会放手与回馈。'],
+  11:['The Intuitive (master 11)','直觉者（大师数 11）','Inspiration and sensitivity, a higher octave of 2. It is often read as an old soul with a message to share.','灵感与敏感，是 2 的高阶。常被视为带着讯息而来的老灵魂。'],
+  22:['The Master Builder (master 22)','大建筑师（大师数 22）','Big practical vision, a higher octave of 4: turning dreams into structures that serve many people.','宏大而务实的愿景，是 4 的高阶：把梦想化为服务众人的实体。'],
+  33:['The Master Teacher (master 33)','大导师（大师数 33）','Compassionate teaching, a higher octave of 6: guiding and healing others.','慈悲的教导，是 6 的高阶：引导并疗愈别人。'],
+};
+const NUM_DEBT = {
+  13:['Karmic debt 13: past laziness or shortcuts. This life asks for steady effort.','业债 13：前世偷懒或走捷径，今生需要踏实努力。'],
+  14:['Karmic debt 14: past misuse of freedom. This life asks for moderation and commitment.','业债 14：前世滥用自由，今生需要节制与承诺。'],
+  16:['Karmic debt 16: past ego or broken trust in love. This life brings humbling lessons that rebuild you.','业债 16：前世自负或在感情上失信，今生会有让你谦卑、重建自我的功课。'],
+  19:['Karmic debt 19: past misuse of power over others. This life teaches you to accept help.','业债 19：前世以权力压人，今生要学会接受别人的帮助。'],
+};
+const NUM_MISS = {
+  1:['self-confidence and speaking up for yourself','自信，为自己发声'], 2:['patience, intuition and cooperation','耐心、直觉与合作'],
+  3:['expressing yourself and trusting your imagination','表达自己，相信想象力'], 4:['order, planning and follow-through','条理、规划与坚持到底'],
+  5:['flexibility and staying calm through change','灵活，在变化中保持冷静'], 6:['home, responsibility and accepting care','家庭、责任，以及接受照顾'],
+  7:['reflection and learning from experience','反思，从经验中学习'], 8:['handling money and authority','管理金钱与权力'],
+  9:['compassion and finishing what you start','慈悲，有始有终'],
+};
+
+const digitSum = n => String(n).split('').reduce((a, c) => a + +c, 0);
+function numReduce(n, keepMaster = true) {
+  const seen = [n];
+  while (n > 9 && !(keepMaster && [11, 22, 33].includes(n))) { n = digitSum(n); seen.push(n); }
+  return {v: n, seen};
+}
+function numerology(y, m, d) {
+  const rm = numReduce(m), rd = numReduce(d), ry = numReduce(y);
+  const compound = rm.v + rd.v + ry.v;
+  const lp = numReduce(compound);
+  const debts = [...new Set([d, ...rd.seen, ...ry.seen, ...lp.seen].filter(x => NUM_DEBT[x]))];
+  const digits = `${y}${m}${d}`;
+  const missing = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(k => !digits.includes(String(k)));
+  const counts = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => digits.split('').filter(c => +c === k).length);
+  return {rm, rd, ry, compound, lp, debts, missing, counts, bd: numReduce(d)};
+}
+
+function numerologyHtml() {
+  const [y, m, d] = STATE.inp.wall;
+  const n = numerology(y, m, d);
+  const lp = NUM_LP[n.lp.v];
+  const chain = r => r.seen.join(' → ');
+  const grid = [[4, 9, 2], [3, 5, 7], [8, 1, 6]].map(row => `<tr>${row.map(k => `<td style="text-align:center;width:33%;${n.counts[k - 1] ? '' : 'color:var(--muted)'}">${n.counts[k - 1] ? String(k).repeat(n.counts[k - 1]) : '·'}</td>`).join('')}</tr>`).join('');
+  let h = `<h3>🔢 ${L('Numerology 数字命理', '数字命理')}<small>${L('Pythagorean, from your calendar birth date', '毕达哥拉斯法，依公历出生日期')}</small></h3>`;
+  h += `<div class="hero"><div class="hero-img"><span class="ch big" style="color:var(--accent)">${n.lp.v}</span></div><div>
+    <div class="hero-t">${L('Life Path ' + n.lp.v + ': ' + lp[0], '生命灵数 ' + n.lp.v + '：' + lp[1])}</div>
+    <div class="hero-s">${L(lp[2], lp[3])}</div>
+    <div class="small muted">${L('Month', '月')} ${chain(n.rm)} · ${L('Day', '日')} ${chain(n.rd)} · ${L('Year', '年')} ${chain(n.ry)} → ${n.rm.v} + ${n.rd.v} + ${n.ry.v} = ${chain(n.lp)}</div></div></div>`;
+  h += `<div class="scard v-${n.debts.length ? 'warn' : 'good'}"><div class="shead"><span class="sicon">⚖️</span><div><div class="stitle">${L('Karmic debt numbers', '业债数')}</div><div class="sverd small muted">${L('13, 14, 16 or 19 appearing in your day or totals', '13、14、16、19 是否出现在出生日或总和中')}</div></div></div>
+    <div class="sbody">${n.debts.length ? n.debts.map(k => `<p>${L(NUM_DEBT[k][0], NUM_DEBT[k][1])}</p>`).join('') : `<p>${L('None. Your day and totals don\'t pass through 13, 14, 16 or 19, so numerology reads no karmic debt carried over.', '没有。你的出生日与各总和都没有经过 13、14、16、19，数字命理认为没有带来业债。')}</p>`}</div></div>`;
+  h += `<div class="scard v-info"><div class="shead"><span class="sicon">🧩</span><div><div class="stitle">${L('Missing numbers: lessons to pick up', '缺失的数字：需要补上的功课')}</div><div class="sverd small muted">${L('Digits 1–9 that never appear in your birth date (Lo Shu grid)', '出生日期中没有出现的 1–9（洛书九宫格）')}</div></div></div>
+    <div class="sbody"><table class="gloss" style="max-width:220px;font:600 18px 'Noto Serif SC',serif">${grid}</table>
+    ${n.missing.length ? `<ul>${n.missing.map(k => `<li><b>${k}</b> · ${L(NUM_MISS[k][0], NUM_MISS[k][1])}</li>`).join('')}</ul>` : `<p>${L('None missing. Every number 1–9 appears.', '没有缺失，1–9 全部出现。')}</p>`}</div></div>`;
+  h += `<p class="small muted">${L('Numerologists differ on method. Some add all the digits in one go, and some read missing numbers from your name instead of your birth date. Like the rest of this tab, it\'s for reflection, not fact.', '各派算法不同：有人把所有数字一次相加，有人用姓名而非生日来看缺失的数字。和本页其他内容一样，仅供反思，并非事实。')}</p>`;
+  return h;
 }
 </script>
 <script>// ===== Narrative reading 解读 (EN / 中文) =====
