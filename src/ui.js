@@ -438,6 +438,7 @@ function setMode(m) {
   document.body.classList.toggle('simple', m === 'simple');
   document.querySelectorAll('.mode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   try { localStorage.setItem('fp-mode', m); } catch (e) {}
+  if (STATE) renderPastLife();
   const cur = (location.hash || '#summary').slice(1);
   showTab(cur);
 }
