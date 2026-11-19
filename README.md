@@ -10,6 +10,7 @@ A single-page calculator that draws a **BaZi (Four Pillars)** chart and cross-re
 - **Zi Wei** – the 12-palace chart with the four transformations (四化), current decade and year.
 - **Qi Men** – an hour chart (转盘, 拆补) for the birth time and for now.
 - **Cross-reference** – each life area read by all three systems, showing where they agree.
+- **Past Life 前世** – a modern, plain-language reading inspired by 三世书: who you were (Year pillar Na Yin), the gift you carried over (Day Master), the lesson left unfinished (weakest element) and why you came back (Hour branch). Original text, not copied from any edition.
 - **Compatibility** – two charts compared by role (spouse, lover, friend, boss, team member, partner, child, parent, sibling).
 - **Guide** – analogies and the calculation steps behind every section.
 - English / 中文 switch, and a Simple / Expert view.
