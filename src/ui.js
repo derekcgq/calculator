@@ -410,7 +410,7 @@ function renderCross() {
 }
 
 function showTab(name) {
-  if (document.body.classList.contains('simple') && ['reading', 'bazi', 'ziwei', 'qimen', 'cross'].includes(name)) name = 'summary';
+  if (document.body.classList.contains('simple') && ['reading', 'bazi', 'qimen', 'cross'].includes(name)) name = 'summary';
   if (!['summary', 'reading', 'bazi', 'ziwei', 'qimen', 'cross', 'pastlife', 'compat', 'guide'].includes(name)) name = 'bazi';
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
   document.querySelectorAll('.tab').forEach(t => t.hidden = t.id !== 'tab-' + name);
