@@ -75,6 +75,10 @@ function simpleHtml() {
        : L('You have a sharp, independent mind that questions rules, though you often keep it to yourself.', '你思维敏锐、独立，敢于质疑规矩，但常常放在心里不说。')}</p>` : ''}`,
     b.strong ? L('Pick goals big enough to use your energy.', '定下够大的目标，好好发挥你的能量。') : L('Protect your energy — say no to things that drain you.', '保护好你的能量——对消耗你的事情学会说不。'), null, W(row('Self')));
 
+  // Animal archetype
+  h += C('🐾', L('Your animal archetype', '你的动物原型'), 'info', L('Drawn from your own chart — no ranking', '来自你自己的命盘——不分等级'), animalBody(),
+    L('Use it as a memorable picture of your style, not a verdict.', '把它当作记住自己风格的图像，而不是定论。'));
+
   // Career
   const cr = row('Career'), ct = Tn(cr), carE = zw.evalPalace(P('官禄'));
   const kd = qb.doorPalace('开门');

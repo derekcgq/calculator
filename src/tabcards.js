@@ -294,3 +294,35 @@ function hourBoundary() {
     ${alt ? `<p class="small">${L('Now', '当前')}: ${cur.pillars} · ${cur.bureau} · ${L('Life Star', '命主')} ${cur.soul}<br>${L('Other method', '另一种方法')}: ${alt.pillars} · ${alt.bureau} · ${L('Life Star', '命主')} ${alt.soul}</p>` : ''}
     <p class="small muted">${L('Most online tools use clock time; the stricter tradition uses true solar time. If the recorded birth time is only approximate, ask family which hour is right. Change it under Advanced options → "Use true solar time".', '大多数网站用钟表时间；较严格的传统用真太阳时。若出生时间只是大概，请向家人确认时辰。可在「高级选项」→「使用真太阳时」中切换。')}</p></div>`;
 }
+
+// ===== Animal archetype: derived from the chart (Day Master + birth-year zodiac + energy level) =====
+const AN_STEM = {
+  '甲': {e: '🐉', en: 'Azure Dragon', zh: '青龙', py: 'qīng lóng', el: 'Yang Wood', t: ['Like a tall tree growing straight up: a natural leader with principles and a long-term vision.', 'Watch-out: stiff when asked to bend.', 'Example: a founder who sets the vision and will not compromise on the standard.'], z: ['像一棵笔直向上的大树：天生的领导者，有原则、有长远眼光。', '留意：被要求变通时较僵硬。', '例：定下愿景、绝不降低标准的创办人。']},
+  '乙': {e: '🦌', en: 'Deer', zh: '鹿', py: 'lù', el: 'Yin Wood', t: ['Like a vine or flower: gentle, flexible, finds a way around obstacles and wins by building goodwill.', 'Watch-out: leans on a supportive environment, avoids confrontation.', 'Example: someone who quietly gets their way because everyone likes working with them.'], z: ['像藤蔓和花草：温柔、有弹性，遇阻能绕过去，靠人缘取胜。', '留意：需要支持性的环境，回避正面冲突。', '例：因为大家都喜欢和他合作，而悄悄把事情办成的人。']},
+  '丙': {e: '🔥', en: 'Phoenix', zh: '凤凰', py: 'fèng huáng', el: 'Yang Fire', t: ['Like the sun: warm, generous and visible; lights up a room and inspires people.', 'Watch-out: burning out, or needing the spotlight.', 'Example: the colleague who energises every meeting.'], z: ['像太阳：温暖、慷慨、醒目，能点亮一个房间、鼓舞别人。', '留意：燃尽，或太需要聚光灯。', '例：让每场会议都活起来的同事。']},
+  '丁': {e: '🦊', en: 'Fox', zh: '狐狸', py: 'hú li', el: 'Yin Fire', t: ['Like a candle flame: perceptive and warm with those close to you; reads people and rooms well.', 'Watch-out: overthinking, and flickering under pressure.', 'Example: sensing the real worry behind what a client says.'], z: ['像烛火：敏锐，对亲近的人很温暖，善于读懂人和场合。', '留意：想太多，压力下容易摇曳不定。', '例：听出客户话语背后真正的担忧。']},
+  '戊': {e: '🐻', en: 'Bear', zh: '熊', py: 'xióng', el: 'Yang Earth', t: ['Like a mountain: steady, dependable and protective; slow to start but hard to stop.', 'Watch-out: stubborn, slow to change course.', 'Example: the one who carries the team through a long project.'], z: ['像一座山：稳重、可靠、有保护心；起步慢，但一旦行动就很难被阻止。', '留意：固执，转向较慢。', '例：带着团队走完一个长项目的人。']},
+  '己': {e: '🌿', en: 'Capybara', zh: '水豚', py: 'shuǐ tún', el: 'Yin Earth', t: ['Like fertile fields: nurturing, calm, gets along with everyone and absorbs stress for others.', 'Watch-out: over-accommodating; your own needs get lost.', 'Example: the friend everyone relaxes around.'], z: ['像肥沃的田野：滋养、平静、与谁都合得来，替别人承受压力。', '留意：太迁就别人，忽略自己的需要。', '例：大家在他身边都能放松的朋友。']},
+  '庚': {e: '🐺', en: 'Wolf', zh: '狼', py: 'láng', el: 'Yang Metal', t: ['Like a steel axe: decisive, direct, brave, and fiercely loyal to your own pack.', 'Watch-out: bluntness that hurts.', 'Example: the one who makes the hard call and then backs the team.'], z: ['像一把钢斧：果断、直接、勇敢，对自己人极其忠诚。', '留意：太直接，容易伤人。', '例：做出艰难决定，然后全力支持团队的人。']},
+  '辛': {e: '🦚', en: 'Peacock', zh: '孔雀', py: 'kǒng què', el: 'Yin Metal', t: ['Like a jewel: refined, quality-minded, with an eye for beauty and detail.', 'Watch-out: perfectionism and sensitivity to criticism.', 'Example: someone with impeccable taste who spots every flaw in a presentation.'], z: ['像一颗宝石：精致、讲品质，对美和细节有眼光。', '留意：完美主义，对批评敏感。', '例：品味出众、一眼挑出简报所有瑕疵的人。']},
+  '壬': {e: '🐬', en: 'Dolphin', zh: '海豚', py: 'hǎi tún', el: 'Yang Water', t: ['Like a great river or ocean: expansive, sociable, curious and quick-flowing.', 'Watch-out: scattered focus.', 'Example: the networker who connects people and ideas.'], z: ['像大江大海：开阔、爱交际、好奇、思路流动快。', '留意：注意力分散。', '例：把人和想法连起来的人脉高手。']},
+  '癸': {e: '🐈‍⬛', en: 'Black Cat', zh: '黑猫', py: 'hēi māo', el: 'Yin Water', t: ['Like rain or mist: quiet, intuitive, independent, with a touch of mystery.', 'Watch-out: withdrawing, over-sensitivity.', 'Example: someone who says little but notices everything.'], z: ['像雨露和薄雾：安静、直觉强、独立，带点神秘感。', '留意：爱退缩，过于敏感。', '例：话不多但什么都看在眼里的人。']},
+};
+const ZOD_PY = ['shǔ', 'niú', 'hǔ', 'tù', 'lóng', 'shé', 'mǎ', 'yáng', 'hóu', 'jī', 'gǒu', 'zhū'];
+const ZOD_LOOK = [
+  ['quick-witted and resourceful', '机灵、点子多'], ['dependable and hard-working', '可靠、勤奋'], ['bold and confident', '大胆、自信'], ['gentle and tactful', '温和、得体'],
+  ['impressive and ambitious', '有气势、有抱负'], ['calm, observant and private', '沉静、观察入微、有点神秘'], ['energetic and independent', '精力旺盛、独立'], ['kind and artistic', '善良、有艺术感'],
+  ['playful and clever', '风趣、聪明'], ['neat, precise and outspoken', '利落、精准、直言'], ['loyal and straightforward', '忠诚、坦率'], ['easygoing and generous', '随和、大方'],
+];
+function animalBody() {
+  const {bazi: b} = STATE, a = AN_STEM[b.dm];
+  if (!a) return '';
+  const zi = BRANCHES.indexOf(b.pillars[0].zhi);
+  const t = LANG === 'zh' ? a.z : a.t;
+  return `<p style="font-size:1.15em"><span style="font-size:1.8em">${a.e}</span> <b>${L(a.en, a.zh)}</b>${pyTag(a.py + ' · ' + a.zh)}</p>
+    <p class="small muted">${L(`Core animal — from your Day Master 日主 ${b.dm} (${a.el})`, `核心动物——来自日主 ${b.dm}（${a.el.replace('Yang', '阳').replace('Yin', '阴').replace('Wood', '木').replace('Fire', '火').replace('Earth', '土').replace('Metal', '金').replace('Water', '水')}）`)}</p>
+    <p>${t[0]}</p><p>${t[1]}</p><p>${t[2]}</p>
+    <p><b>${L('Outer image', '外在形象')}</b> — ${L(`birth-year zodiac: ${ZODIAC[zi]} 生肖${ZODIAC_ZH[zi]}`, `出生年生肖：${ZODIAC_ZH[zi]}`)}${pyTag(ZOD_PY[zi])}: ${L('others first see you as', '别人第一眼觉得你')} ${L(ZOD_LOOK[zi][0], ZOD_LOOK[zi][1])}.</p>
+    <p><b>${L('Energy', '能量')}</b> — ${b.strong ? L('runs strong: you need challenges and outlets.', '偏强：需要挑战和发挥空间。') : L('needs support: you thrive with good people, rest and routine.', '偏需要支持：有好的人际、休息和规律才发挥得好。')}</p>
+    <p class="small muted">${L('How this was chosen: each of the ten Day Master stems is a nature image (tree, vine, sun, flame, mountain, field, axe, jewel, ocean, rain), and each is matched to an animal that fits that image, inspired by the Four Symbols (青龙, 朱雀, 白虎, 玄武). It is a modern, playful mapping, not a classical rule. Unlike social-media quizzes there are no tiers: no animal is better than another.', '选择方式：十个日主天干各对应一种自然意象（树、藤、太阳、烛火、山、田、斧、宝石、海、雨），再配上契合该意象的动物，灵感来自四象（青龙、朱雀、白虎、玄武）。这是现代的趣味对应，不是古法规则。和社交媒体上的测验不同，这里没有等级之分：没有哪种动物比另一种更好。')}</p>`;
+}
