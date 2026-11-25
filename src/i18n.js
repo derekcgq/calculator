@@ -18,7 +18,7 @@ const UI_TXT = {
   adv: ['⚙ Advanced options (time zone, true solar time, Zi hour, query time)', '⚙ 进阶设置（时区、真太阳时、子时规则、查询时间）'], view: ['View:', '视图：'], simple: ['🙂 Simple', '🙂 简单'], expert: ['🔬 Expert', '🔬 专业'],
   male: ['Male 男', '男'], female: ['Female 女', '女'],
   t_summary: ['Summary', '总览'], t_reading: ['Reading 解读', '解读'], t_bazi: ['BaZi 八字', '八字'], t_ziwei: ['Zi Wei 紫微', '紫微'], t_qimen: ['Qi Men 奇门', '奇门'],
-  t_cross: ['Cross-reference 合参', '合参'], t_compat: ['Compatibility 合盘', '合盘'], t_guide: ['Guide 指南', '指南'],
+  t_cross: ['Cross-reference 合参', '合参'], t_pastlife: ['Past Life 前世', '前世'], t_compat: ['Compatibility 合盘', '合盘'], t_guide: ['Guide 指南', '指南'],
   placeholder: ['Enter birth details above and tap <b>Calculate chart</b>. New to this? Start with the <b>Guide 指南</b> tab.', '请在上方输入出生资料，然后点 <b>开始排盘</b>。第一次使用？可先看 <b>指南</b>。'],
   footer: ['Calculations: lunar-javascript (6tail) for calendar & pillars, iztro for Zi Wei Dou Shu, custom 时家奇门 转盘 拆补 engine. Strength, ratings and cross-reference tones are simplified rule-of-thumb heuristics — schools differ, so treat readings as reflection, not prediction.',
     '计算：历法与四柱用 lunar-javascript，紫微斗数用 iztro，时家奇门（转盘、拆补法）为自建引擎。身强弱、评分与合参结论均为简化的经验规则——各派说法不同，请作为自我反思参考，而非预言。'],

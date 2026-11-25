@@ -139,7 +139,7 @@ function calculate(scroll = true) {
 }
 
 function render() {
-  renderBazi(); renderZiwei(); renderQimen(); renderCross(); initCompat(); guideYour(); renderReading(); renderSimple(); zhScope();
+  renderBazi(); renderZiwei(); renderQimen(); renderCross(); initCompat(); guideYour(); renderReading(); renderSimple(); renderPastLife(); zhScope();
   if (STATE.inp.noHour) $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE());
 }
 
@@ -411,7 +411,7 @@ function renderCross() {
 
 function showTab(name) {
   if (document.body.classList.contains('simple') && ['reading', 'bazi', 'ziwei', 'qimen', 'cross'].includes(name)) name = 'summary';
-  if (!['summary', 'reading', 'bazi', 'ziwei', 'qimen', 'cross', 'compat', 'guide'].includes(name)) name = 'bazi';
+  if (!['summary', 'reading', 'bazi', 'ziwei', 'qimen', 'cross', 'pastlife', 'compat', 'guide'].includes(name)) name = 'bazi';
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
   document.querySelectorAll('.tab').forEach(t => t.hidden = t.id !== 'tab-' + name);
   if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
@@ -438,6 +438,7 @@ function setMode(m) {
   document.body.classList.toggle('simple', m === 'simple');
   document.querySelectorAll('.mode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   try { localStorage.setItem('fp-mode', m); } catch (e) {}
+  if (STATE) renderPastLife();
   const cur = (location.hash || '#summary').slice(1);
   showTab(cur);
 }

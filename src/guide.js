@@ -151,6 +151,7 @@ function guideHtml() {
     <tr><td>Qi Men now</td><td>Your two Day stems' palaces in the current chart: whose palace produces or controls whose (the present power balance), plus the relationship indicator palace (六合, 开门, 生门…).</td><td>10–15%</td></tr></table>
     <p>Score = 50 + 50 × weighted average of the five factors (each −1…+1).</p>` +
     MATTERS(['Spouse/lover: Day pillars + element exchange matter most.', 'Boss/team: Day Master roles + Month pillars (workplace palace).', 'Parent/child: Year ↔ Hour pillars (the parent and child palaces).', 'Business partner: element exchange — do you complete each other?']));
+  h += `<h3>6 · Past life 前世 — the Book of Three Lives</h3>` + pastLifeGuide();
   h += `<p class="muted small">All ratings are simplified rules of thumb so you can learn the logic. Experienced practitioners weigh many more factors and schools disagree, so treat this as a structured way to reflect, not a forecast.</p>`;
   return h;
 }
@@ -180,6 +181,7 @@ function guideYour() {
   const d0 = b.daYun[0], fwd = (stemYang(b.pillars[0].gan) ? 1 : 0) === b.gender;
   set('luck', L(`Year stem ${b.pillars[0].gan} is ${stemYang(b.pillars[0].gan) ? 'yang' : 'yin'}, ${b.gender ? 'male' : 'female'} → <b>${fwd ? 'forward' : 'backward'}</b> from month pillar ${b.pillars[1].gz}. First Luck Pillar ${d0.gz} starts ${b.yunStart.y}y ${b.yunStart.m}m ${b.yunStart.d}d after birth (${d0.startYear}).`,
     `年干 ${b.pillars[0].gan} 为${stemYang(b.pillars[0].gan) ? '阳' : '阴'}，${b.gender ? '男' : '女'}命 → 从月柱 ${b.pillars[1].gz} <b>${fwd ? '顺排' : '逆排'}</b>。第一步大运 ${d0.gz} 于出生后 ${b.yunStart.y} 年 ${b.yunStart.m} 个月 ${b.yunStart.d} 天起运（${d0.startYear} 年）。`));
+  { const pd = pastLifeData(); set('pastlife', L(`Year pillar ${pd.yp.gz} → Na Yin <b>${pd.yp.nayin}</b> · Day Master <b>${b.dm}</b> · weakest element <b>${EL_EN[pd.weak]}</b>${pd.hp ? ` · Hour branch <b>${pd.hp.zhi}</b>` : ''}.`, `年柱 ${pd.yp.gz} → 纳音 <b>${pd.yp.nayin}</b> · 日主 <b>${b.dm}</b> · 最弱五行 <b>${EL[pd.weak]}</b>${pd.hp ? ` · 时支 <b>${pd.hp.zhi}</b>` : ''}。`)); }
   set('stages', b.pillars.map(p => `${p.zhi}：${LIFE_STAGES[p.stage]}`).join(' · '));
   const life = zw.byName('命宫');
   if (!zw.unknown) set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}), Life Star <b>${zw.soul}</b>, Body Star <b>${zw.body}</b>. Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始），命主 <b>${zw.soul}</b>，身主 <b>${zw.body}</b>。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
