@@ -159,6 +159,16 @@ function simpleHtml() {
   h += C('📅', L('Your life in 10-year seasons', '人生的十年季节'), 'info', L('Good, mixed and harder decades', '顺利、起伏与较辛苦的十年'), `<div class="tlwrap">${tl}</div>`,
     L('Every life has all three kinds of seasons — plan big moves for the sunny ones, and build skills in the cloudy ones.', '每个人的人生都有这三种季节——在晴天做大决定，在阴天积累本领。'), null, L("Each decade is a BaZi Luck Pillar, rated by whether its elements help your chart's balance.", '每个十年即八字大运，依其五行是否有助命局平衡来评分。'));
 
+  // Zi Wei labels + era (needs the birth hour)
+  {
+    const F = zwFoundation();
+    const hb = hourBoundary(); if (hb) h += hb;
+    if (F) {
+      h += C('🧬', L('Your Zi Wei labels, explained', '你的紫微标签白话解释'), 'info', L('Bureau, Life Star, Body Star', '五行局、命主、身主'), zwFoundationBody(F),
+        L('Treat these as style tendencies. Many people share each label.', '把它们当作风格倾向。很多人与你有相同标签。'));
+      h += C('🌐', L('The 20-year era you live in', '你所处的 20 年大运'), 'info', L('Background weather, not personal luck', '背景大环境，不是个人运气'), eraBody(F));
+    }
+  }
   // Zi Wei 10-year palaces in plain words (needs the birth hour)
   if (!zw.unknown && zw.palaces.length) {
     const curZ = zw.current, TI = {good: '☀️', warn: '🌧', mixed: '⛅'};

@@ -237,6 +237,9 @@ function zwReadingData() {
   const sanfang = [4, 8, 6].map(k => zw.palaces.find(p => p.branch === BRANCHES[(bi + k) % 12]));
   let h = `<p>${L(`Lunar birth date ${esc(zw.lunarDate)}, ${esc(zw.time)}. Your Life palace sits in <b>${life.stem}${life.branch}</b>, with the <b>${esc(zw.fiveClass)}</b> Five Element Bureau, so your first 10-year period starts at nominal age ${life.decadal[0]}. `,
     `农历生日 ${esc(zw.lunarDate)}，${esc(zw.time)}。命宫在<b>${life.stem}${life.branch}</b>，为<b>${esc(zw.fiveClass)}</b>，第一个大限从虚岁 ${life.decadal[0]} 岁开始。`)}`;
+  { const so = ZW_SOUL[zw.soul], bo = ZW_BODY[zw.body];
+    if (so && bo) h += L(` Your Life Star (命主) is <b>${zw.soul}</b> — ${so.en.split(': ')[1].split('. ')[0]}. Your Body Star (身主) is <b>${zw.body}</b> — ${bo.en.split(': ')[1].split('. ')[0]}. `,
+      ` 命主为<b>${zw.soul}</b>——${so.zh.split('：')[1].split('。')[0]}。身主为<b>${zw.body}</b>——${bo.zh.split('：')[1].split('。')[0]}。`); }
   h += bodyP.name === '命宫' ? L('Your Body palace (身宫) coincides with your Life palace (命身同宫): what you see is what you get — your core personality stays the central theme throughout life.', '身宫与命宫同宫（命身同宫）：表里如一——你的核心性格终身都是人生主轴。')
     : L(`Your Body palace (身宫, the area that grows in importance after about 35) falls in <b>${bodyP.name} (${bodyP.en})</b>: ${palPlain(bodyP.name).toLowerCase()} becomes a central theme of your later life.`, `身宫（约 35 岁后愈显重要的领域）落在<b>${bodyP.name}</b>：${palPlain(bodyP.name)}会成为你后半生的重心。`);
   h += '</p>';

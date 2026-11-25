@@ -105,7 +105,9 @@ function guideHtml() {
       'Convert the birth date to the <b>lunar</b> calendar (leap months handled).',
       '<b>Life palace</b>: start at 寅, count forward by lunar month, then backward by birth hour. The Body palace counts forward by hour.',
       'Palace stems: from the birth-year stem, using the Five Tigers rule.',
-      '<b>Five Element Bureau</b> 五行局 (e.g. 水二局): the Na Yin element of the Life palace\'s stem-branch. Its number (2–6) sets the age your first 10-year period starts.',
+      '<b>Five Element Bureau</b> 五行局 (wǔ xíng jú, e.g. 水二局): the Na Yin element of the Life palace\'s stem-branch. Its number (2–6) sets the age your first 10-year period starts; a higher number is traditionally read as a slower start.',
+      '<b>Life Star</b> 命主 (mìng zhǔ): a star set by the branch of your Life palace — your inner style. <b>Body Star</b> 身主 (shēn zhǔ): set by your birth-year branch — your style in action. Many people share each one.',
+      '<b>Period (运, yùn)</b> 九运 (jiǔ yùn): the world is divided into 20-year eras that change at Lichun. 2024–2043 is Period 9 (Li, Fire). It is background weather shared by everyone, not personal luck.',
       'The <b>紫微</b> star is placed from your lunar day and bureau number; 13 other main stars follow fixed patterns relative to 紫微 and its mirror 天府.',
       'Minor stars are placed by year, month and hour. 四化 are set by the birth-year stem (e.g. 甲 year → 廉贞禄, 破军权, 武曲科, 太阳忌).',
       '10-year periods move forward or backward through the palaces by gender and year polarity. Ages are nominal (虚岁: counted from 1 at birth).',
@@ -180,7 +182,7 @@ function guideYour() {
     `年干 ${b.pillars[0].gan} 为${stemYang(b.pillars[0].gan) ? '阳' : '阴'}，${b.gender ? '男' : '女'}命 → 从月柱 ${b.pillars[1].gz} <b>${fwd ? '顺排' : '逆排'}</b>。第一步大运 ${d0.gz} 于出生后 ${b.yunStart.y} 年 ${b.yunStart.m} 个月 ${b.yunStart.d} 天起运（${d0.startYear} 年）。`));
   set('stages', b.pillars.map(p => `${p.zhi}：${LIFE_STAGES[p.stage]}`).join(' · '));
   const life = zw.byName('命宫');
-  if (!zw.unknown) set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}). Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始）。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
+  if (!zw.unknown) set('zwbasics', L(`Lunar ${zw.lunarDate}, ${zw.time}. Life palace <b>${life.stem}${life.branch}</b> → bureau <b>${zw.fiveClass}</b> (first decade starts at ${life.decadal[0]}), Life Star <b>${zw.soul}</b>, Body Star <b>${zw.body}</b>. Year stem ${b.pillars[0].gan} 四化: `, `农历 ${zw.lunarDate}，${zw.time}。命宫 <b>${life.stem}${life.branch}</b> → <b>${zw.fiveClass}</b>（第一个大限从 ${life.decadal[0]} 岁开始），命主 <b>${zw.soul}</b>，身主 <b>${zw.body}</b>。年干 ${b.pillars[0].gan} 四化：`) + (SIHUA[b.pillars[0].gan] || []).map((s, k) => s + '化' + '禄权科忌'[k]).join(' '));
   set('qmbasics', L(`Now: ${q.dayGZ} day, ${q.hourGZ} hour, solar term ${q.jq} → <b>${q.yang ? 'Yang' : 'Yin'}</b>, ${q.yuan}, Ju <b>${q.ju}</b>. 旬首 ${q.xunName} hides under ${q.xunYi} → lead star ${q.zfStar} moves to ${QM_PALACE[q.zfPalace]}; lead door ${q.zsDoor} moves to ${QM_PALACE[q.zsPalace]}. Void ${q.kongBr.join('')}.`,
     `此刻：${q.dayGZ}日 ${q.hourGZ}时，节气 ${q.jq} → <b>${q.yang ? '阳遁' : '阴遁'}</b>，${q.yuan}，<b>${q.ju}局</b>。旬首 ${q.xunName} 遁于 ${q.xunYi} → 值符 ${q.zfStar} 移至 ${QM_PALACE[q.zfPalace].split(' ')[0]}宫；值使 ${q.zsDoor} 移至 ${QM_PALACE[q.zsPalace].split(' ')[0]}宫。空亡 ${q.kongBr.join('')}。`));
 }

@@ -110,6 +110,12 @@ function baziCards() {
 function zwCards() {
   const {zw} = STATE;
   let h = cardsIntro('Your Zi Wei chart: one card per area of life. The 12-palace grid is in the technical section below.', '紫微斗数：每个人生领域一张卡片。十二宫盘在下方技术区。');
+  h += hourBoundary() || '';
+  const F = zwFoundation();
+  if (F) {
+    h += card('🧬', L('Your Zi Wei labels explained', '你的紫微标签解释'), 'info', L('Bureau, Life Star, Body Star', '五行局、命主、身主'), zwFoundationBody(F), L('These are lookup labels from your Life palace and birth year, so many people share each one. They describe tendencies, not outcomes.', '这些标签是由命宫和出生年查出来的，很多人与你相同。它们描述倾向，不是结果。'));
+    h += card('🌐', L('The 20-year era you live in', '你所处的 20 年大运'), 'info', L('Period 9 and your birth period', '九运与你出生的运'), eraBody(F));
+  }
   const ICON = {命宫:'🙂',官禄:'💼',财帛:'💰',夫妻:'❤️',子女:'👶',父母:'👴',仆役:'🤝',交友:'🤝',兄弟:'👫',疾厄:'🩺',田宅:'🏠',迁移:'✈️',福德:'🧘'};
   const ORDER = ['命宫','官禄','财帛','夫妻','子女','父母','仆役','兄弟','疾厄','田宅','迁移','福德'];
   const TIP = {good:['A strength — lean into this area.','这是你的强项——可以多发挥。'], warn:['Go slowly here and double-check decisions.','这方面慢慢来，决定前多核对。'], mixed:['Results depend on your effort and timing.','结果取决于你的努力与时机。']};
@@ -194,3 +200,97 @@ function crossCards() {
   return h;
 }
 document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('techwrap') && STATE) { STATE.techOpen = STATE.techOpen || {}; STATE.techOpen[e.target.dataset.k] = e.target.open; } }, true);
+
+// ===== Zi Wei foundation: Bureau 五行局, Life Star 命主, Body Star 身主, 20-year Period 九运 =====
+const ZW_BUREAU = {
+  '水二局': {n: 2, py: 'shuǐ èr jú', el: ['Water', '水'],
+    en: 'Water Two: the first 10-year stage starts at age 2. Traditionally read as an early starter — quick, adaptable, flows around obstacles. Watch-out: staying power. Example: a child who picks up skills fast and takes on responsibility early.',
+    zh: '水二局：第一个大限从 2 岁开始。传统上视为起步早——反应快、善变通、遇阻能绕。留意：持久力。例：小时候学东西快、很早就担起责任。'},
+  '木三局': {n: 3, py: 'mù sān jú', el: ['Wood', '木'],
+    en: 'Wood Three: the first stage starts at age 3. Read as steady growth — learning, building, reaching upward. Watch-out: rigidity when plans are blocked. Example: someone who keeps adding skills and promotions year after year.',
+    zh: '木三局：第一个大限从 3 岁开始。传统上视为稳步成长——学习、积累、向上。留意：计划受阻时较固执。例：每年都在增加技能、一步步晋升。'},
+  '金四局': {n: 4, py: 'jīn sì jú', el: ['Metal', '金'],
+    en: 'Metal Four: the first stage starts at age 4. Read as structured and decisive — standards, discipline, clean cuts. Watch-out: being too hard on yourself and others. Example: a manager who sets clear rules and sticks to them.',
+    zh: '金四局：第一个大限从 4 岁开始。传统上视为有条理、果断——重标准、讲纪律、干脆利落。留意：对自己和他人太严。例：规则清楚、说到做到的主管。'},
+  '土五局': {n: 5, py: 'tǔ wǔ jú', el: ['Earth', '土'],
+    en: 'Earth Five: the first stage starts at age 5. Read as stable and slow-and-steady, often a later bloomer. Watch-out: sticking too long to the familiar. Example: someone who builds a career and home carefully and peaks in mid-life.',
+    zh: '土五局：第一个大限从 5 岁开始。传统上视为稳重、慢热，常大器晚成。留意：太久守着熟悉的东西。例：一步一脚印建立事业和家，中年才开花。'},
+  '火六局': {n: 6, py: 'huǒ liù jú', el: ['Fire', '火'],
+    en: 'Fire Six: the first stage starts at age 6, the latest start. Read as a slower take-off but strong inner drive and passion once going. Watch-out: burning out or flaring up. Example: someone who finds their direction later, then pursues it with intensity.',
+    zh: '火六局：第一个大限从 6 岁开始，是起步最晚的一局。传统上视为起步较慢，但一旦上路，内在动力与热情很强。留意：燃尽或爆发。例：较晚找到方向，之后全力投入。'},
+};
+const ZW_SOUL = {
+  '贪狼': {py: 'tān láng', br: '子', en: 'Wolf of Greed: appetite for experience, charm, many interests. Strength: sociable and resourceful. Watch-out: scattered focus, indulgence. Example: the person who is good at everything from golf to networking but must choose.', zh: '贪狼：对体验有胃口、有魅力、兴趣广。优点：善交际、点子多。留意：精力分散、放纵。例：什么都会、人缘好，但需要学会取舍的人。'},
+  '巨门': {py: 'jù mén', br: '丑、亥', en: 'Giant Gate: the star of speech and scrutiny. Strength: spots flaws and details others miss; argues and persuades well. Watch-out: friction in conversation, suspicion, overthinking. Example: a lawyer cross-examining a witness, or an engineer who finds the hole in a design.', zh: '巨门：口才与审视之星。优点：看得出别人漏掉的细节和破绽，会分析、会说服。留意：言语摩擦、多疑、想太多。例：盘问证人的律师，或一眼看出设计漏洞的工程师。'},
+  '禄存': {py: 'lù cún', br: '寅、戌', en: 'Stored Salary: careful and protective of resources. Strength: thrifty, reliable, builds security. Watch-out: over-cautious, reluctant to share. Example: the saver who always has a reserve.', zh: '禄存：谨慎、守护资源。优点：节俭、可靠、会建立安全感。留意：太保守、舍不得分享。例：总有一笔备用金的人。'},
+  '文曲': {py: 'wén qǔ', br: '卯、酉', en: 'Literary Melody: artistic, articulate, sensitive. Strength: expressive, good with words and music. Watch-out: moodiness. Example: someone who explains a complex idea through a perfect story.', zh: '文曲：有艺术感、能言善表达、细腻敏感。优点：善用文字与音乐表达。留意：情绪起伏。例：能用一个故事把复杂道理讲清楚的人。'},
+  '廉贞': {py: 'lián zhēn', br: '辰、申', en: 'Integrity-and-Passion star: principled, intense, ambitious, strong feelings. Strength: drive and conviction. Watch-out: stubborn pride. Example: a founder who will not compromise on the standard.', zh: '廉贞：有原则、强烈、有野心、感情浓。优点：有冲劲、有信念。留意：固执好胜。例：绝不降低标准的创业者。'},
+  '武曲': {py: 'wǔ qǔ', br: '巳、未', en: 'Martial Melody: decisive, practical, money-minded. Strength: determination and execution. Watch-out: bluntness, hardness. Example: the person who just gets it done and handles the budget.', zh: '武曲：果断、务实、重财。优点：有决心、执行力强。留意：直接、偏硬。例：把事情办成、又管得好预算的人。'},
+  '破军': {py: 'pò jūn', br: '午', en: 'Breaker of Armies: pioneer and disruptor who rebuilds. Strength: courage to start over. Watch-out: restlessness, breaking what works. Example: someone who changes industry twice and thrives.', zh: '破军：开拓者、破旧立新。优点：敢于重来。留意：不安分、破坏原本好的东西。例：换过两次行业、每次都做得起来的人。'},
+};
+const ZW_BODY = {
+  '火星': {py: 'huǒ xīng', br: '子、午', en: 'Fire Star: fast, intense reactions and bursts of energy. Strength: quick to act under pressure. Watch-out: impulsiveness, a short temper that cools fast. Example: you reply sharply in a meeting, then ten minutes later you have moved on.', zh: '火星：反应快、来势猛、爆发力强。优点：压力下行动迅速。留意：冲动、脾气来得快去得也快。例：开会时回得很冲，十分钟后就放下了。'},
+  '天相': {py: 'tiān xiàng', br: '丑、未', en: 'Minister Star: fair, diplomatic, helpful. Strength: keeps order and supports others. Watch-out: indecision, being used as a go-between. Example: the colleague everyone trusts to mediate.', zh: '天相：公正、圆融、乐于帮人。优点：维持秩序、辅佐他人。留意：犹豫、被当成调解人。例：同事都信任的调解者。'},
+  '天梁': {py: 'tiān liáng', br: '寅、申', en: 'Beam Star: protective, elder-like, advisory. Strength: calm and caring. Watch-out: lecturing, taking on others\' burdens. Example: the one people go to for advice when things go wrong.', zh: '天梁：有保护心、像长辈、爱指点。优点：沉稳、关怀。留意：爱说教、替别人扛事。例：出事时大家来找的人。'},
+  '天同': {py: 'tiān tóng', br: '卯、酉', en: 'Harmony Star: easygoing, gentle, comfort-loving. Strength: relaxed and kind. Watch-out: avoiding effort and conflict. Example: someone who stays calm in a crisis but needs a push to start.', zh: '天同：随和、温柔、爱舒适。优点：放松、善良。留意：回避费力与冲突。例：危机中很稳，但需要有人推一把才开始。'},
+  '文昌': {py: 'wén chāng', br: '辰、戌', en: 'Literary Star: orderly, educated, careful with detail. Strength: clear thinking and documents. Watch-out: perfectionism. Example: someone who writes the cleanest report in the team.', zh: '文昌：有条理、有文化、细致。优点：思路清晰、文书强。留意：完美主义。例：团队里报告写得最清楚的人。'},
+  '天机': {py: 'tiān jī', br: '巳、亥', en: 'Mechanism Star: clever planner, quick thinker, changeable. Strength: strategy and adaptation. Watch-out: overthinking and changing course. Example: someone who always has plan B and plan C ready.', zh: '天机：聪明、爱谋划、思路快、多变。优点：策略与应变。留意：想太多、常改变方向。例：永远备有 B 计划和 C 计划的人。'},
+};
+const PERIODS = {
+  6: {n: '六运', py: 'liù yùn', tri: ['Qian 乾 (Heaven, Metal)', '乾（天·金）'], en: 'authority, institutions, discipline', zh: '权威、制度、纪律'},
+  7: {n: '七运', py: 'qī yùn', tri: ['Dui 兑 (Lake, Metal)', '兑（泽·金）'], en: 'communication, finance, entertainment', zh: '沟通、金融、娱乐'},
+  8: {n: '八运', py: 'bā yùn', tri: ['Gen 艮 (Mountain, Earth)', '艮（山·土）'], en: 'property, stability, accumulation', zh: '房产、稳定、积累'},
+  9: {n: '九运', py: 'jiǔ yùn', tri: ['Li 离 (Fire)', '离（火）'], en: 'technology and AI, visibility, education, reputation', zh: '科技与人工智能、曝光度、教育、名声'},
+};
+// Periods run 20 years from Lichun: 1864 = Period 1 ... 2024 = Period 9
+function periodOf(y, m = 12, d = 1) {
+  const ly = (m < 2 || (m === 2 && d < 4)) ? y - 1 : y;
+  return {no: (Math.floor((ly - 1864) / 20) % 9) + 1, start: ly - ((ly - 1864) % 20)};
+}
+function zwFoundation() {
+  const {zw, inp, qYear} = STATE;
+  if (zw.unknown) return null;
+  const bu = ZW_BUREAU[zw.fiveClass] || null, so = ZW_SOUL[zw.soul] || null, bo = ZW_BODY[zw.body] || null;
+  const bp = periodOf(inp.wall[0], inp.wall[1], inp.wall[2]);
+  const cy = qYear || new Date().getFullYear(), cp = periodOf(cy, 6, 1);
+  return {bu, so, bo, bp, cp, cy, ag: cy - cp.start + 1};
+}
+const pyTag = py => LANG === 'zh' ? '' : ` <span class="muted small">(${py})</span>`;
+function zwFoundationBody(f) {
+  const zw = STATE.zw, item = (title, name, py, extra, txt) => `<p><b>${title}</b> ${name}${pyTag(py)}${extra ? ` <span class="muted small">${extra}</span>` : ''}<br>${txt}</p>`;
+  let h = '';
+  if (f.bu) h += item(L('Bureau', '五行局'), zw.fiveClass, f.bu.py, '', L(f.bu.en, f.bu.zh));
+  if (f.so) h += item(L('Life Star 命主 — your inner style', '命主——内在风格'), zw.soul, f.so.py, L(`(from Life palace branch ${f.so.br})`, `（由命宫地支 ${f.so.br} 而来）`), L(f.so.en, f.so.zh));
+  if (f.bo) h += item(L('Body Star 身主 — your style in action', '身主——行动风格'), zw.body, f.bo.py, L(`(from birth-year branch ${f.bo.br})`, `（由出生年支 ${f.bo.br} 而来）`), L(f.bo.en, f.bo.zh));
+  return h;
+}
+function eraBody(f) {
+  const bp = PERIODS[f.bp.no], cp = PERIODS[f.cp.no];
+  let h = '';
+  if (cp) h += `<p>${L(`The current 20-year era is <b>Period ${f.cp.no} (${cp.n}</b>${pyTag(cp.py)}<b>, ${cp.tri[0]})</b>, running ${f.cp.start}–${f.cp.start + 19}. This year, ${f.cy}, is year ${f.ag} of 20. Its themes in tradition: ${cp.en}.`,
+    `当前的 20 年大运是<b>${cp.n}（${cp.tri[1]}）</b>，${f.cp.start}–${f.cp.start + 19} 年。${f.cy} 年是第 ${f.ag} 年（共 20 年）。传统上的主题：${cp.zh}。`)}</p>`;
+  if (bp) h += `<p>${L(`You were born in <b>Period ${f.bp.no} (${bp.n}</b>${pyTag(bp.py)}<b>, ${bp.tri[0]})</b>, ${f.bp.start}–${f.bp.start + 19}: ${bp.en}.`, `你出生在<b>${bp.n}（${bp.tri[1]}）</b>，${f.bp.start}–${f.bp.start + 19} 年：${bp.zh}。`)}</p>`;
+  h += `<p class="small muted">${L('An era is shared by everyone alive in it — it is the background weather, not your personal luck. Eras change at Lichun (about 4 February) of the start year.', '大运是同时代所有人共享的背景，不是你个人的运气。大运在起始年的立春（约 2 月 4 日）换运。')}</p>`;
+  return h;
+}
+// Warn when the Chinese hour differs between clock time and true solar time
+function hourBoundary() {
+  const {inp, bazi: b} = STATE;
+  if (inp.noHour) return null;
+  const hi = h => Math.floor(((h + 1) % 24) / 2), pad = n => String(n).padStart(2, '0');
+  const clockH = inp.wall[3], tst = b.times.tst;
+  if (hi(clockH) === hi(tst[3])) return null;
+  let alt = null;
+  try {
+    const altInp = {...inp, useTST: !inp.useTST};
+    const altB = computeBazi(altInp), altZ = computeZiwei(altInp, altB, new Date());
+    alt = {pillars: altB.pillars.map(p => p.gz).join(' '), bureau: altZ.fiveClass, soul: altZ.soul, hour: altZ.time};
+  } catch (e) { alt = null; }
+  const using = inp.useTST ? L('true solar time', '真太阳时') : L('clock time', '钟表时间');
+  const cur = {pillars: b.pillars.map(p => p.gz).join(' '), bureau: STATE.zw.fiveClass, soul: STATE.zw.soul, hour: STATE.zw.time};
+  return `<div class="card"><b>⚠️ ${L('Your birth hour depends on the method', '你的出生时辰取决于所用方法')}</b>
+    <p class="small">${L(`By the clock you were born at ${pad(clockH)}:${pad(inp.wall[4])} (${BRANCHES[hi(clockH)]} hour). By true solar time at your birthplace it was ${pad(tst[3])}:${pad(tst[4])} (${BRANCHES[hi(tst[3])]} hour). The Hour pillar and the whole Zi Wei chart depend on this. This page is using <b>${using}</b>.`,
+      `按钟表时间，你出生于 ${pad(clockH)}:${pad(inp.wall[4])}（${BRANCHES[hi(clockH)]}时）。按出生地的真太阳时是 ${pad(tst[3])}:${pad(tst[4])}（${BRANCHES[hi(tst[3])]}时）。时柱和整个紫微命盘都取决于此。本页现在使用的是<b>${using}</b>。`)}</p>
+    ${alt ? `<p class="small">${L('Now', '当前')}: ${cur.pillars} · ${cur.bureau} · ${L('Life Star', '命主')} ${cur.soul}<br>${L('Other method', '另一种方法')}: ${alt.pillars} · ${alt.bureau} · ${L('Life Star', '命主')} ${alt.soul}</p>` : ''}
+    <p class="small muted">${L('Most online tools use clock time; the stricter tradition uses true solar time. If the recorded birth time is only approximate, ask family which hour is right. Change it under Advanced options → "Use true solar time".', '大多数网站用钟表时间；较严格的传统用真太阳时。若出生时间只是大概，请向家人确认时辰。可在「高级选项」→「使用真太阳时」中切换。')}</p></div>`;
+}
