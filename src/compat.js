@@ -207,7 +207,7 @@ function compatFormHtml() {
     <label>${L('Longitude °E', '经度 °E')}<input type="number" step="0.01" id="c-lon"></label>
     <label>${L('UTC offset at birth', '出生时区')}<input type="number" step="0.25" id="c-tz"></label>
   </div>
-  <button class="btn" id="c-go">${L('Check compatibility', '查看合盘')}</button> <span id="c-err" class="small" style="color:var(--warn)"></span>
+  <button class="btn" id="c-go">${L('Check compatibility', '查看合盘')}</button> <button class="btn ghost" id="c-swap" type="button" title="${L('Make them the main chart and put yourself in this form', '把对方设为主盘，并把你自己放入此表单')}">⇄ ${L('Swap you ↔ them', '互换 你↔对方')}</button> <span id="c-err" class="small" style="color:var(--warn)"></span>
   <p class="muted small">${L('The same two people score differently for different roles — e.g. someone who gives you structure is ideal as a husband or boss, but can feel restrictive as a friend. Switch "They are my…" to compare.', '同样两个人在不同关系中的分数会不同——例如给你规矩的人很适合当丈夫或上司，当朋友却可能让你觉得拘束。切换“对方是我的…”即可比较。')}</p></div><div id="c-out"></div>`;
 }
 function initCompat() {
@@ -222,8 +222,25 @@ function initCompat() {
   else $('#c-place').value = 'sg';
   cp(); if (s && s.place === 'custom') { $('#c-lon').value = s.lon; $('#c-tz').value = s.tz; }
   $('#c-go').onclick = runCompat;
+  $('#c-swap').onclick = swapCompat;
   $('#c-purpose').onchange = () => { if (STATE && STATE.compatB) runCompat(); };
   if (s && s.date && STATE) runCompat();
+}
+function swapCompat() {
+  if (!STATE) return;
+  const d = $('#c-date').value, notime = $('#c-notime').checked;
+  if (!d || (!notime && !$('#c-time').value)) { $('#c-err').textContent = L('Enter their birth details first, then swap.', '请先填写对方的出生信息，再互换。'); return; }
+  // snapshot both people
+  const them = {name: $('#c-name').value, date: d, time: $('#c-time').value, notime, gender: $('#c-gender').value, place: $('#c-place').value, lon: $('#c-lon').value, tz: $('#c-tz').value};
+  const me = {name: $('#pname').value, date: $('#bdate').value, time: $('#btime').value, notime: $('#notime').checked, gender: $('#gender').value, place: $('#place').value, lon: $('#lon').value, tz: $('#tz').value};
+  // their details become the main form
+  $('#pname').value = them.name; $('#bdate').value = them.date; $('#btime').value = them.time; $('#notime').checked = them.notime; $('#btime').disabled = them.notime;
+  $('#gender').value = them.gender; $('#place').value = them.place;
+  setPreset();
+  if (them.place === 'custom') { $('#lon').value = them.lon; $('#tz').value = them.tz; }
+  // yours go into the compare form (initCompat reloads it from storage after calculate)
+  try { localStorage.setItem('fp-compat', JSON.stringify({purpose: $('#c-purpose').value, name: me.name, date: me.date, time: me.time, notime: me.notime, gender: me.gender, place: me.place, lon: me.lon, tz: me.tz})); } catch (e) {}
+  calculate(false);
 }
 function runCompat() {
   if (!STATE) return;
