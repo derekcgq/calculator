@@ -24,6 +24,7 @@ input,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius
 input[readonly]{background:#f3eee4}
 .chk{flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13px}
 .btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 20px;font:600 15px Inter;cursor:pointer;margin-top:12px}
+.hours{display:grid;gap:8px}.hrow{display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px}.hpil{font:600 18px "Noto Serif SC",serif}.hpick{white-space:nowrap}
 .ghost{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:12px Inter;cursor:pointer;color:var(--ink)}
 #err{color:var(--warn);font-size:13px}
 .tabs{display:flex;gap:4px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5;overflow-x:auto}
@@ -898,7 +899,7 @@ function calculate(scroll = true) {
 
 function render() {
   renderBazi(); renderZiwei(); renderQimen(); renderCross(); initCompat(); guideYour(); renderReading(); renderSimple(); renderPastLife(); zhScope();
-  if (STATE.inp.noHour) $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE());
+  if (STATE.inp.noHour) { $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE() + hourScenarioCard()); bindHourPicks(); }
 }
 
 // ---------- BaZi ----------
@@ -1007,7 +1008,7 @@ function starHtml(s, cls) {
   return `<span class="st ${cls}">${s.name}${s.b ? `<i>${s.b}</i>` : ''}${s.m ? `<em class="m-${s.m}">${s.m}</em>` : ''}</span>`;
 }
 function renderZiwei() {
-  if (STATE.zw.unknown) { $('#tab-ziwei').innerHTML = NOHOUR_NOTE(); return; }
+  if (STATE.zw.unknown) { $('#tab-ziwei').innerHTML = NOHOUR_NOTE() + hourScenarioCard(); bindHourPicks(); return; }
   const {zw} = STATE;
   const cur = zw.current;
   let h = `<div class="card meta"><div>Lunar ${esc(zw.lunarDate)} · ${esc(zw.chineseDate)} · ${esc(zw.time)} (${esc(zw.timeRange)})</div><div class="muted">Five Element Bureau 五行局: <b>${esc(zw.fiveClass)}</b> · Life master 命主: <b>${esc(zw.soul)}</b> · Body master 身主: <b>${esc(zw.body)}</b></div></div>`;
@@ -1916,9 +1917,20 @@ function runCompat() {
   const r = computeCompat(STATE.bazi, STATE.zw, STATE.qmNow, B, Bzw, v.purpose, !notime);
   // all-purpose summary
   const all = Object.keys(PURPOSES).map(k => ({k, s: computeCompat(STATE.bazi, STATE.zw, STATE.qmNow, B, Bzw, k, !notime).score}));
-  renderCompat(r, B, v, all, notime);
+  let slots = null;
+  if (notime) {
+    slots = [];
+    HR_SLOTS.forEach(sl => {
+      try {
+        const I = {...inB, wall: [inB.wall[0], inB.wall[1], inB.wall[2], sl.mid[0], sl.mid[1]], useTST: false};
+        const Bs = computeBazi(I); let Zs = null; try { Zs = computeZiwei(I, Bs, new Date()); } catch (e) {}
+        slots.push({sl, score: computeCompat(STATE.bazi, STATE.zw, STATE.qmNow, Bs, Zs, v.purpose, true).score, hz: Bs.pillars[3].gz});
+      } catch (e) {}
+    });
+  }
+  renderCompat(r, B, v, all, notime, slots);
 }
-function renderCompat(r, B, v, all, notime) {
+function renderCompat(r, B, v, all, notime, slots) {
   const A = STATE.bazi;
   const nm = esc(v.name || L('Them', '对方'));
   const mini = (X, who) => `<div class="cmini"><div class="lbl">${who}</div><div>${X.pillars.map((p, i) => (i === 3 && notime && who === nm) ? '<span class="muted">??</span>' : `${ch(p.gan)}${ch(p.zhi)}`).join(' ')}</div><div class="small x-expert">DM ${ch(X.dm)} ${EL_EN[X.dmEl]} · ${X.label.split(' ')[0]} ${X.label.split(' ').slice(1).join(' ')} · needs ${X.favourable.map(e => EL_EN[e]).join('/')}</div></div>`;
@@ -1927,6 +1939,12 @@ function renderCompat(r, B, v, all, notime) {
     ${notime ? `<div class="small muted">${L('Their birth time unknown — hour pillar and Zi Wei palaces for them are skipped.', '对方出生时间不详——不计算其时柱与紫微宫位。')}</div>` : ''}
     ${STATE.zw.unknown ? `<div class="small muted">${L('Your own birth time is unknown — your Hour pillar and Zi Wei palaces are left out, so this score rests on BaZi and Qi Men only.', '你自己的出生时间不详——不计算你的时柱与紫微宫位，此分数仅基于八字与奇门。')}</div>` : ''}</div></div>
     <div class="cbars x-expert">${Object.keys(SEC_LABEL).map(k => r.W[k] ? `<div class="cbar"><span>${secLabel(k)} <small class="muted">${Math.round(r.W[k] / Object.values(r.W).reduce((a, c) => a + c, 0) * 100)}%</small></span><div class="dbar"><div style="${r.comp[k] >= 0 ? `left:50%;width:${r.comp[k] * 50}%` : `left:${50 + r.comp[k] * 50}%;width:${-r.comp[k] * 50}%`}" class="${r.comp[k] >= 0 ? 'pos' : 'neg'}"></div></div></div>` : '').join('')}</div></div>`;
+  if (slots && slots.length) {
+    const sc = slots.map(x => x.score), lo = Math.min(...sc), hi = Math.max(...sc);
+    h += `<div class="card"><h4>${L('Score by their possible birth hour', '按对方可能的出生时辰看分数')}</h4>
+      <p class="small muted">${L(`Since their birth time is unknown, the score above leaves their Hour pillar and Zi Wei out. If you add each possible hour, the score ranges from <b>${lo}</b> to <b>${hi}</b>.`, `由于对方出生时间不详，上方分数不含其时柱与紫微。若逐个加入可能的时辰，分数范围为 <b>${lo}</b> 至 <b>${hi}</b>。`)}</p>
+      <div class="roles">${slots.map(x => `<span class="role"><span>${HR_BR[x.sl.bi]}${x.sl.from === 0 ? L(' (late)', '晚') : x.sl.from === 23 ? L(' (early)', '早') : ''} ${hrPad(x.sl.from)}–${hrPad(x.sl.to % 24)}h</span><b class="${x.score >= 60 ? 'up' : x.score < 45 ? 'down' : ''}">${x.score}</b></span>`).join('')}</div></div>`;
+  }
   h += compatPlain(r, nm) + `<div class="x-expert">${ex('How the score is calculated', COMPAT_HOWTO)}</div>`;
   h += `<div class="card"><h4>${L('Same pair, different roles', '同一对人，不同关系')}</h4><div class="roles">${all.sort((a, b) => b.s - a.s).map(x => `<button class="role ${x.k === v.purpose ? 'on' : ''}" data-k="${x.k}"><span>${purposeLabel(x.k)}</span><b class="${x.s >= 60 ? 'up' : x.s < 45 ? 'down' : ''}">${x.s}</b></button>`).join('')}</div></div>`;
   Object.keys(SEC_LABEL).forEach(sec => {
@@ -2276,6 +2294,68 @@ function plRefsHtml() {
     <p class="small muted">${L('The readings on this page are original text written for this tool. These sources describe the traditions they draw on; none of the wording is copied from them.', '本页解读为本工具原创撰写；以上资料说明其所依据的传统，文字并非从中抄录。')}</p></details>`;
 }
 const plEx = (ex) => ex ? `<div class="stip">🧭 <b>${L('In everyday life:', '生活中的例子：')}</b> ${L(ex[0], ex[1])}</div>` : '';
+</script>
+<script>// ---------- Birth time unknown: show every possible hour ----------
+const HR_BR = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const HR_PY = ['Zǐ','Chǒu','Yín','Mǎo','Chén','Sì','Wǔ','Wèi','Shēn','Yǒu','Xū','Hài'];
+// 13 rows: late-night 子 (00:00–01:00), then 丑…亥, then early-night 子 (23:00–24:00)
+const HR_SLOTS = (() => {
+  const a = [{bi: 0, from: 0, to: 1, mid: [0, 30]}];
+  for (let i = 1; i <= 11; i++) a.push({bi: i, from: 2 * i - 1, to: 2 * i + 1, mid: [2 * i, 0]});
+  a.push({bi: 0, from: 23, to: 24, mid: [23, 30]});
+  return a;
+})();
+const hrPad = n => String(n).padStart(2, '0');
+
+function hourScenarios() {
+  const {inp, bazi: b0} = STATE;
+  const base = {...inp, noHour: false, useTST: false};
+  const rows = [];
+  HR_SLOTS.forEach(s => {
+    try {
+      const w = [inp.wall[0], inp.wall[1], inp.wall[2], s.mid[0], s.mid[1]];
+      const I = {...base, wall: w};
+      const B = computeBazi(I);
+      const Z = computeZiwei(I, B, new Date());
+      const life = Z.byName('命宫'), ev = Z.evalPalace(life);
+      rows.push({s, B, Z, life, ev, hour: B.pillars[3], day: B.pillars[2].gz, dayShift: B.pillars[2].gz !== b0.pillars[2].gz});
+    } catch (e) {}
+  });
+  return rows;
+}
+
+function hourScenarioCard() {
+  if (!STATE || !STATE.inp.noHour) return '';
+  const rows = hourScenarios();
+  if (!rows.length) return '';
+  const b0 = STATE.bazi;
+  const fixed = b0.pillars.map(p => `${p.gan}${p.zhi}`).join(' ');
+  const lifeKeys = new Set(rows.map(r => r.ev.stars.map(x => x.name).join('')));
+  const stems = new Set(rows.map(r => r.hour.stemGod));
+  const item = r => {
+    const s = r.s, br = HR_BR[s.bi], py = HR_PY[s.bi];
+    const t = `${hrPad(s.from)}:00–${hrPad(s.to % 24)}:00`;
+    const stars = r.ev.stars.length ? r.ev.stars.map(x => x.name).join(L(' + ', '、')) : L('empty', '空宫');
+    const kw = r.ev.stars.slice(0, 2).map(x => plainStar(x.name)).filter(Boolean).join(L('; ', '；'));
+    const label = s.from === 0 ? L('late night', '晚子') : s.from === 23 ? L('early night', '早子') : '';
+    return `<div class="hrow"><div class="hh"><b>${br}</b>${LANG === 'zh' ? '' : ` <span class="muted small">${py}</span>`}<div class="small muted">${t}${label ? ' · ' + label : ''}</div></div>
+      <div class="hb"><div><span class="hpil">${r.hour.gan}${r.hour.zhi}</span> <span class="small muted">${L('hour pillar', '时柱')} · ${r.hour.stemGod}</span>${r.dayShift ? ` <span class="small" style="color:var(--warn)">${L('Day pillar becomes', '日柱变为')} ${r.day}</span>` : ''}</div>
+      <div class="small">${L('Zi Wei', '紫微')}: ${r.Z.fiveClass} · ${L('Life palace', '命宫')} ${r.life.stem}${r.life.branch} · <b>${stars}</b>${r.ev.borrowed ? L(' (borrowed)', '（借对宫）') : ''}</div>
+      ${kw ? `<div class="small muted">${kw}</div>` : ''}</div>
+      <button class="ghost hpick" type="button" data-t="${hrPad(s.mid[0])}:${hrPad(s.mid[1])}">${L('Use', '选用')}</button></div>`;
+  };
+  return `<div class="card"><h4>${L('Every possible birth hour', '所有可能的出生时辰')}</h4>
+    <p class="small muted">${L(`Your Year, Month and Day pillars (${fixed}) are the same whatever the hour, so those parts of your reading are solid. Only the Hour pillar, Zi Wei chart and Qi Men birth chart change. Below is each two-hour slot and what it would give you: ${lifeKeys.size} different Life-palace star combinations. Read them and see which one sounds most like you, or ask a parent which slot fits (e.g. "just after lunch" = 午 Wǔ, 11:00–13:00).`, `你的年柱、月柱、日柱（${fixed}）不受时辰影响，所以这部分解读是可靠的。只有时柱、紫微命盘与奇门命局会随时辰改变。下面列出每个时辰对应的结果：共 ${lifeKeys.size} 种不同的命宫主星组合。可逐个对照，看哪个最像你，或问家人大概是哪个时段（例如“午饭后不久” = 午时，11:00–13:00）。`)}</p>
+    <div class="hours">${rows.map(item).join('')}</div>
+    <p class="small muted">${L('Times use clock time, since the exact minute is unknown. Tap "Use" to load that slot as your birth time (you can switch back to "Time unknown" any time).', '时间按钟表时间计算。点“选用”即把该时辰作为出生时间载入（随时可改回“时间不详”）。')}</p></div>`;
+}
+
+function bindHourPicks() {
+  document.querySelectorAll('.hpick').forEach(btn => btn.onclick = () => {
+    $('#notime').checked = false; $('#btime').disabled = false; $('#btime').value = btn.dataset.t;
+    calculate(false);
+  });
+}
 </script>
 <script>// ===== Narrative reading 解读 (EN / 中文) =====
 const ROLE_PHRASE = {peer:'self-reliance, confidence and allies', output:'creativity, expression and turning ideas into tangible output', wealth:'wealth and opportunities', officer:'authority, career structure and pressure', resource:'vital fuel, learning and strategic backing'};

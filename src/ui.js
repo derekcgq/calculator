@@ -140,7 +140,7 @@ function calculate(scroll = true) {
 
 function render() {
   renderBazi(); renderZiwei(); renderQimen(); renderCross(); initCompat(); guideYour(); renderReading(); renderSimple(); renderPastLife(); zhScope();
-  if (STATE.inp.noHour) $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE());
+  if (STATE.inp.noHour) { $('#tab-summary').insertAdjacentHTML('afterbegin', NOHOUR_NOTE() + hourScenarioCard()); bindHourPicks(); }
 }
 
 // ---------- BaZi ----------
@@ -249,7 +249,7 @@ function starHtml(s, cls) {
   return `<span class="st ${cls}">${s.name}${s.b ? `<i>${s.b}</i>` : ''}${s.m ? `<em class="m-${s.m}">${s.m}</em>` : ''}</span>`;
 }
 function renderZiwei() {
-  if (STATE.zw.unknown) { $('#tab-ziwei').innerHTML = NOHOUR_NOTE(); return; }
+  if (STATE.zw.unknown) { $('#tab-ziwei').innerHTML = NOHOUR_NOTE() + hourScenarioCard(); bindHourPicks(); return; }
   const {zw} = STATE;
   const cur = zw.current;
   let h = `<div class="card meta"><div>Lunar ${esc(zw.lunarDate)} · ${esc(zw.chineseDate)} · ${esc(zw.time)} (${esc(zw.timeRange)})</div><div class="muted">Five Element Bureau 五行局: <b>${esc(zw.fiveClass)}</b> · Life master 命主: <b>${esc(zw.soul)}</b> · Body master 身主: <b>${esc(zw.body)}</b></div></div>`;

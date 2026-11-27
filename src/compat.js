@@ -257,9 +257,20 @@ function runCompat() {
   const r = computeCompat(STATE.bazi, STATE.zw, STATE.qmNow, B, Bzw, v.purpose, !notime);
   // all-purpose summary
   const all = Object.keys(PURPOSES).map(k => ({k, s: computeCompat(STATE.bazi, STATE.zw, STATE.qmNow, B, Bzw, k, !notime).score}));
-  renderCompat(r, B, v, all, notime);
+  let slots = null;
+  if (notime) {
+    slots = [];
+    HR_SLOTS.forEach(sl => {
+      try {
+        const I = {...inB, wall: [inB.wall[0], inB.wall[1], inB.wall[2], sl.mid[0], sl.mid[1]], useTST: false};
+        const Bs = computeBazi(I); let Zs = null; try { Zs = computeZiwei(I, Bs, new Date()); } catch (e) {}
+        slots.push({sl, score: computeCompat(STATE.bazi, STATE.zw, STATE.qmNow, Bs, Zs, v.purpose, true).score, hz: Bs.pillars[3].gz});
+      } catch (e) {}
+    });
+  }
+  renderCompat(r, B, v, all, notime, slots);
 }
-function renderCompat(r, B, v, all, notime) {
+function renderCompat(r, B, v, all, notime, slots) {
   const A = STATE.bazi;
   const nm = esc(v.name || L('Them', '对方'));
   const mini = (X, who) => `<div class="cmini"><div class="lbl">${who}</div><div>${X.pillars.map((p, i) => (i === 3 && notime && who === nm) ? '<span class="muted">??</span>' : `${ch(p.gan)}${ch(p.zhi)}`).join(' ')}</div><div class="small x-expert">DM ${ch(X.dm)} ${EL_EN[X.dmEl]} · ${X.label.split(' ')[0]} ${X.label.split(' ').slice(1).join(' ')} · needs ${X.favourable.map(e => EL_EN[e]).join('/')}</div></div>`;
@@ -268,6 +279,12 @@ function renderCompat(r, B, v, all, notime) {
     ${notime ? `<div class="small muted">${L('Their birth time unknown — hour pillar and Zi Wei palaces for them are skipped.', '对方出生时间不详——不计算其时柱与紫微宫位。')}</div>` : ''}
     ${STATE.zw.unknown ? `<div class="small muted">${L('Your own birth time is unknown — your Hour pillar and Zi Wei palaces are left out, so this score rests on BaZi and Qi Men only.', '你自己的出生时间不详——不计算你的时柱与紫微宫位，此分数仅基于八字与奇门。')}</div>` : ''}</div></div>
     <div class="cbars x-expert">${Object.keys(SEC_LABEL).map(k => r.W[k] ? `<div class="cbar"><span>${secLabel(k)} <small class="muted">${Math.round(r.W[k] / Object.values(r.W).reduce((a, c) => a + c, 0) * 100)}%</small></span><div class="dbar"><div style="${r.comp[k] >= 0 ? `left:50%;width:${r.comp[k] * 50}%` : `left:${50 + r.comp[k] * 50}%;width:${-r.comp[k] * 50}%`}" class="${r.comp[k] >= 0 ? 'pos' : 'neg'}"></div></div></div>` : '').join('')}</div></div>`;
+  if (slots && slots.length) {
+    const sc = slots.map(x => x.score), lo = Math.min(...sc), hi = Math.max(...sc);
+    h += `<div class="card"><h4>${L('Score by their possible birth hour', '按对方可能的出生时辰看分数')}</h4>
+      <p class="small muted">${L(`Since their birth time is unknown, the score above leaves their Hour pillar and Zi Wei out. If you add each possible hour, the score ranges from <b>${lo}</b> to <b>${hi}</b>.`, `由于对方出生时间不详，上方分数不含其时柱与紫微。若逐个加入可能的时辰，分数范围为 <b>${lo}</b> 至 <b>${hi}</b>。`)}</p>
+      <div class="roles">${slots.map(x => `<span class="role"><span>${HR_BR[x.sl.bi]}${x.sl.from === 0 ? L(' (late)', '晚') : x.sl.from === 23 ? L(' (early)', '早') : ''} ${hrPad(x.sl.from)}–${hrPad(x.sl.to % 24)}h</span><b class="${x.score >= 60 ? 'up' : x.score < 45 ? 'down' : ''}">${x.score}</b></span>`).join('')}</div></div>`;
+  }
   h += compatPlain(r, nm) + `<div class="x-expert">${ex('How the score is calculated', COMPAT_HOWTO)}</div>`;
   h += `<div class="card"><h4>${L('Same pair, different roles', '同一对人，不同关系')}</h4><div class="roles">${all.sort((a, b) => b.s - a.s).map(x => `<button class="role ${x.k === v.purpose ? 'on' : ''}" data-k="${x.k}"><span>${purposeLabel(x.k)}</span><b class="${x.s >= 60 ? 'up' : x.s < 45 ? 'down' : ''}">${x.s}</b></button>`).join('')}</div></div>`;
   Object.keys(SEC_LABEL).forEach(sec => {
